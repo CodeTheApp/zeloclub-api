@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 
 export class AuthController {
-  static register = async (req: Request, res: Response) => {
+  public static readonly register = async (req: Request, res: Response) => {
     try {
       const {
         name,
@@ -32,7 +32,7 @@ export class AuthController {
     }
   };
 
-  static login = async (req: Request, res: Response) => {
+  public static readonly login = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
       const token = await AuthService.login(email, password);
