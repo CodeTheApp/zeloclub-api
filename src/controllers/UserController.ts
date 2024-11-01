@@ -6,9 +6,10 @@ import { User } from '../entities/User';
 import { USER_TYPES } from '../types';
 
 const UserRepository = AppDataSource.getRepository(User);
+const ProfessionalProfileRepository =
+  AppDataSource.getRepository(ProfessionalProfile);
 
 export class UserController {
-  // Endpoint para criar um usuário profissional
   public static readonly createProfessional: RequestHandler = async (
     req,
     res
@@ -96,15 +97,12 @@ export class UserController {
         .status(201)
         .json({ message: 'Professional user created successfully', user });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   };
 
-  // Endpoint para criar um usuário de backoffice
   public static readonly createBackofficeUser: RequestHandler = async (
     req,
     res
@@ -156,7 +154,83 @@ export class UserController {
     }
   };
 
-  // Endpoint para retornar dados do usuário por ID
+  public static readonly completeProfile: RequestHandler = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
+        location,
+        specialty,
+        experience,
+        rating,
+        price,
+        reviews,
+        available,
+        isPremium,
+        validated,
+        address,
+        certifications,
+        contacts,
+        social,
+        services,
+        schedule,
+        reviewsList,
+      } = req.body;
+
+      // Encontra o usuário pelo ID
+      const user = await UserRepository.findOne({
+        where: { id },
+        relations: ['professionalProfile'],
+      });
+
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return; // Apenas sai da função, sem retornar um valor
+      }
+
+      // Se o usuário ainda não é um profissional, transforma-o em um
+      if (user.userType !== USER_TYPES.PROFESSIONAL) {
+        user.userType = USER_TYPES.PROFESSIONAL;
+      }
+
+      // Verifica se o usuário já possui um perfil profissional
+      let professionalProfile = user.professionalProfile;
+      if (!professionalProfile) {
+        // Cria um novo perfil profissional se ele não existir
+        professionalProfile = new ProfessionalProfile();
+      }
+
+      // Atualiza os dados do perfil profissional
+      professionalProfile.location = location;
+      professionalProfile.specialty = specialty;
+      professionalProfile.experience = experience;
+      professionalProfile.rating = rating || 0;
+      professionalProfile.price = price;
+      professionalProfile.reviews = reviews || 0;
+      professionalProfile.available = available;
+      professionalProfile.isPremium = isPremium;
+      professionalProfile.validated = validated;
+      professionalProfile.address = address;
+      professionalProfile.certifications = certifications;
+      professionalProfile.contacts = contacts;
+      professionalProfile.social = social;
+      professionalProfile.services = services;
+      professionalProfile.schedule = schedule;
+      professionalProfile.reviewsList = reviewsList;
+
+      // Associa o perfil profissional ao usuário
+      user.professionalProfile = professionalProfile;
+
+      // Salva o usuário e o perfil atualizado
+      await UserRepository.save(user);
+
+      res.status(200).json({ message: 'Profile completed successfully', user });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
       const { id } = req.params;
@@ -178,11 +252,27 @@ export class UserController {
     }
   };
 
-  // Endpoint para retornar todos os usuários
   public static readonly getAllUsers: RequestHandler = async (req, res) => {
     try {
       const users = await UserRepository.find({
         relations: ['professionalProfile'],
+      });
+
+      res.status(200).json({ users });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  public static readonly getAllBackofficeUsers: RequestHandler = async (
+    req,
+    res
+  ) => {
+    try {
+      const users = await UserRepository.find({
+        where: { userType: USER_TYPES.BACKOFFICE },
       });
 
       res.status(200).json({ users });

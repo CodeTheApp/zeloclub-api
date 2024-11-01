@@ -17,7 +17,7 @@ enum Gender {
   NOT_INFORMED = 'Not Informed',
 }
 
-enum USER_TYPES {
+export enum USER_TYPES {
   CUSTOMER = 'Customer',
   BACKOFFICE = 'Backoffice',
   PROFESSIONAL = 'Professional',
