@@ -5,12 +5,15 @@ import express from 'express';
 import 'reflect-metadata';
 import { AppDataSource } from './config/ormconfig';
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
-app.use(express.json()); // Middleware para interpretar JSON
+app.use(express.json());
+
 app.use('/auth', authRoutes); // Rotas de autenticação
+app.use('/users', userRoutes); // Novas rotas para usuários
 
 AppDataSource.initialize()
   .then(() => {
