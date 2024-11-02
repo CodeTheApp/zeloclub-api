@@ -28,6 +28,13 @@ router.post('/professional', authenticate, UserController.createProfessional);
 // Endpoint para obter os dados de um usuário por ID
 router.get('/:id', UserController.getUserById);
 
+router.delete(
+  '/:id',
+  authenticate,
+  authorize([USER_TYPES.BACKOFFICE]),
+  UserController.deleteUser
+);
+
 // Endpoint para buscar todos os users
 router.get('/', authenticate, UserController.getAllUsers);
 

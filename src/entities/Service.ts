@@ -28,6 +28,9 @@ export class Service {
   @Column({ default: true })
   isActive: boolean; // Indica se a vaga está ativa
 
+  @Column({ default: false })
+  isDeleted: boolean;
+
   @ManyToOne(() => User, (user) => user.services, { nullable: false })
   createdBy: User; // Relacionamento com o usuário que criou (usuário do tipo backoffice)
 
