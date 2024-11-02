@@ -6,6 +6,29 @@ import { UserRepository } from '../repositories/UserRepository';
 import { USER_TYPES } from '../types';
 
 export class UserController {
+  public static readonly uploadAvatar: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+    const user = await UserRepository.findOneBy({ id });
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    if (req.file && (req.file as any).location) {
+      // (req.file as any).location contém o URL do arquivo no S3
+      user.avatar = (req.file as any).location;
+      await UserRepository.save(user);
+
+      res.status(200).json({
+        message: 'Avatar uploaded successfully',
+        avatarUrl: user.avatar,
+      });
+    } else {
+      res.status(400).json({ message: 'No file uploaded' });
+    }
+  };
+
   public static readonly deleteUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
 

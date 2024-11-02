@@ -1,5 +1,6 @@
 // src/routes/userRoutes.ts
 import { Router } from 'express';
+import { upload } from '../config/uploadConfig';
 import { UserController } from '../controllers/UserController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
 import { USER_TYPES } from '../types';
@@ -43,6 +44,13 @@ router.patch(
   '/:id/complete-profile',
   authenticate,
   UserController.completeProfile
+);
+
+router.patch(
+  '/:id/avatar',
+  authenticate,
+  upload.single('avatar'), // Middleware de upload usando S3
+  UserController.uploadAvatar
 );
 
 export default router;
