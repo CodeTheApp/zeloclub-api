@@ -36,6 +36,9 @@ export class AuthService {
       gender,
     });
 
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
     // Se o usuário for do tipo PROFESSIONAL, cria um perfil profissional vazio
     if (userType === USER_TYPES.PROFESSIONAL) {
       const professionalProfile = new ProfessionalProfile();
