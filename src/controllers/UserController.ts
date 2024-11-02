@@ -1,15 +1,24 @@
 import bcrypt from 'bcrypt';
 import { RequestHandler } from 'express';
-import { AppDataSource } from '../config/ormconfig';
 import { ProfessionalProfile } from '../entities/ProfessionalProfile';
 import { User } from '../entities/User';
+import { UserRepository } from '../repositories/UserRepository';
 import { USER_TYPES } from '../types';
 
-const UserRepository = AppDataSource.getRepository(User);
-const ProfessionalProfileRepository =
-  AppDataSource.getRepository(ProfessionalProfile);
-
 export class UserController {
+  public static readonly deleteUser: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+
+    const user = await UserRepository.findOneBy({ id });
+    if (!user || user.isDeleted) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    await UserRepository.softDeleteUser(id);
+    res.status(200).json({ message: 'User has been soft deleted' });
+  };
+
   public static readonly createProfessional: RequestHandler = async (
     req,
     res
@@ -256,6 +265,7 @@ export class UserController {
     try {
       const users = await UserRepository.find({
         relations: ['professionalProfile'],
+        where: { isDeleted: false },
       });
 
       res.status(200).json({ users });
@@ -272,7 +282,7 @@ export class UserController {
   ) => {
     try {
       const users = await UserRepository.find({
-        where: { userType: USER_TYPES.BACKOFFICE },
+        where: { userType: USER_TYPES.BACKOFFICE, isDeleted: false },
       });
 
       res.status(200).json({ users });

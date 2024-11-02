@@ -21,4 +21,11 @@ router.get(
   ServiceController.getAllServices
 );
 
+router.delete(
+  '/:id',
+  authenticate,
+  authorize([USER_TYPES.BACKOFFICE]),
+  ServiceController.deleteService
+);
+
 export default router;
