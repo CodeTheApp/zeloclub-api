@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import path from 'path';
 import 'reflect-metadata';
 import { AppDataSource } from './config/ormconfig';
 import authRoutes from './routes/authRoutes';
@@ -16,6 +17,8 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
+
+app.use('/files', express.static(path.resolve(__dirname, '..', 'uploads')));
 
 AppDataSource.initialize()
   .then(() => {
