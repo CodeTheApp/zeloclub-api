@@ -4,11 +4,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ProfessionalProfile } from './ProfessionalProfile';
+import { Service } from './Service';
 
 enum Gender {
   FEMALE = 'Female',
@@ -65,6 +67,9 @@ export class User {
   })
   @JoinColumn()
   professionalProfile?: ProfessionalProfile;
+
+  @OneToMany(() => Service, (service) => service.createdBy)
+  services: Service[];
 
   @Column({ type: 'varchar', nullable: true })
   resetPasswordToken: string | null;

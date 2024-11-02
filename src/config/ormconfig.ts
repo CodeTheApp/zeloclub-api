@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ProfessionalProfile } from '../entities/ProfessionalProfile';
+import { Service } from '../entities/Service';
 import { User } from '../entities/User';
 
 export const AppDataSource = new DataSource({
@@ -10,7 +11,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   synchronize: true,
-  entities: [User, ProfessionalProfile],
+  entities: [User, ProfessionalProfile, Service],
 });
 
 AppDataSource.initialize()
