@@ -1,15 +1,25 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { ServiceController } from '../controllers/ServiceController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
 import { USER_TYPES } from '../types';
 
 const router = Router();
 
+const serviceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    message: 'Too many login attempts. Please try again later.',
+  },
+});
+
 // Rota para criar um serviço (somente para usuários do tipo Backoffice)
 router.post(
   '/',
   authenticate,
   authorize([USER_TYPES.BACKOFFICE]),
+  serviceLimiter,
   ServiceController.createService
 );
 

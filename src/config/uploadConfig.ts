@@ -27,12 +27,7 @@ export const upload = multer({
     },
   }),
   fileFilter: (req, file, callback) => {
-    const allowedMimes = [
-      'image/jpeg',
-      'image/pjpeg',
-      'image/png',
-      'image/gif',
-    ];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif'];
     if (allowedMimes.includes(file.mimetype)) {
       callback(null, true);
     } else {

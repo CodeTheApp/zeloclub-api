@@ -180,6 +180,7 @@ export class UserController {
         .status(201)
         .json({ message: 'Backoffice user created successfully', user });
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -257,6 +258,7 @@ export class UserController {
 
       res.status(200).json({ message: 'Profile completed successfully', user });
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -278,6 +280,7 @@ export class UserController {
 
       res.status(200).json({ user });
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -293,6 +296,7 @@ export class UserController {
 
       res.status(200).json({ users });
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -310,6 +314,7 @@ export class UserController {
 
       res.status(200).json({ users });
     } catch (error) {
+      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
