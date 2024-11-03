@@ -6,6 +6,7 @@ import path from 'path';
 import 'reflect-metadata';
 import { AppDataSource } from './config/ormconfig';
 
+import applicationRoutes from './routes/applicationRoutes';
 import authRoutes from './routes/authRoutes';
 import careCharacteristicRoutes from './routes/careCharacteristicRoutes';
 import serviceRoutes from './routes/serviceRoutes';
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/services', serviceRoutes);
+app.use('/application', applicationRoutes);
 
 app.use('/files', express.static(path.resolve(__dirname, '..', 'uploads')));
 app.use('/api/care-characteristics', careCharacteristicRoutes);
