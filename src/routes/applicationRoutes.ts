@@ -18,4 +18,11 @@ router.get(
   ApplicationController.getApplicationsForService
 );
 
+router.patch(
+  '/:applicationId/status',
+  authenticate,
+  authorize([USER_TYPES.CUSTOMER, USER_TYPES.BACKOFFICE]),
+  ApplicationController.updateApplicationStatus
+);
+
 export default router;
