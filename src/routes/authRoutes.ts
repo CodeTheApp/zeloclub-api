@@ -4,7 +4,6 @@ import { AuthController } from '../controllers/AuthController';
 
 const router = Router();
 
-// Configura um limitador de taxa para a rota de login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 5, // Limite de 5 requisições por IP a cada 15 minutos
@@ -13,7 +12,6 @@ const loginLimiter = rateLimit({
   },
 });
 
-// Configura um limitador de taxa para a rota de solicitação de redefinição de senha
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hora
   max: 3, // Limite de 3 requisições por IP a cada 1 hora
