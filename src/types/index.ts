@@ -81,3 +81,41 @@ export enum USER_TYPES {
   BACKOFFICE = 'Backoffice',
   PROFESSIONAL = 'Professional',
 }
+
+// SERVICE TYPES
+
+export type ScheduleType = {
+  day: string; // Exemplo: "Segunda-feira"
+  from: string; // Horário de início, exemplo: "08:00"
+  to: string; // Horário de término, exemplo: "17:00"
+  shift?: string; // Turno, exemplo: "diurno" ou "noturno"
+  frequency?: string; // Exemplo: "12 horas trabalhadas X dias de descanso"
+};
+
+export type Service = {
+  id: string;
+  name: string; // Nome da vaga
+  description: string; // Descrição da vaga
+  schedules: ScheduleType[]; // Lista de dias e horários do plantão
+  advertiser: string; // Anunciante
+  value: string; // Valor do plantão, "A combinar" por padrão
+  location: {
+    zip: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    complement?: string;
+  }; // Localização com informações opcionais de endereço completo
+  contactPhone: string; // Telefone para contato
+  characteristics: CareCharacteristic[]; // Lista de características de cuidado associadas
+  isDeleted: boolean; // Indica se o serviço foi excluído
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+// CareCharacteristic
+export type CareCharacteristic = {
+  id: string;
+  name: string; // Nome da característica de cuidado
+  description: string; // Descrição detalhada da característica
+};
