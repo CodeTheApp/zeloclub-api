@@ -10,8 +10,6 @@ export class ApplicationController {
   static async updateApplicationStatus(req: Request, res: Response) {
     const { applicationId } = req.params;
     const { status } = req.body; // Novo status, esperado como "Accepted" ou "Rejected"
-    const userId = (req as any).user.id; // ID do usuário autenticado
-    const userType = (req as any).user.userType; // Tipo do usuário autenticado
 
     // Validar se o novo status é permitido
     const allowedStatuses = ['Accepted', 'Rejected'];
@@ -38,7 +36,8 @@ export class ApplicationController {
     await ApplicationRepository.save(application);
 
     await sendNotificationEmail(
-      application.applicant.email,
+      // application.applicant.email,
+      'isaacsvianna@gmail.com',
       `Status de sua aplicação foi atualizado para: ${status}`,
       `O status de sua aplicação para o serviço ${service.name} foi atualizado para ${status}.`
     );
