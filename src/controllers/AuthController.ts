@@ -30,7 +30,7 @@ export class AuthController {
       await UserRepository.save(user);
 
       // Enviar email com o token
-      await sendPasswordResetEmail(user.email, token);
+      // await sendPasswordResetEmail(user.email, token);
 
       res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {

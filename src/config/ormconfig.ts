@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { DataSource } from 'typeorm';
 
 import { CareCharacteristic } from '../entities/CareCharacteristic';
@@ -12,10 +14,12 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  synchronize: true,
+  synchronize: false,
   entities: [User, ProfessionalProfile, Service, CareCharacteristic],
+  migrations: ['src/migration/*.ts'],
+  
 });
-
+console.log("password ", process.env.DB_PASS)
 AppDataSource.initialize()
   .then(() => console.log('Data Source has been initialized!'))
   .catch((err) =>

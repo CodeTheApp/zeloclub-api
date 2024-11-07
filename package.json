@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/index.ts",
     "build": "tsc",
-    "typeorm": "ts-node-dev --transpile-only ./node_modules/typeorm/cli.js"
+    "typeorm": "ts-node-dev --transpile-only ./node_modules/typeorm/cli.js",
+    "migration:create": "npm run typeorm migration:create",
+    "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/config/ormconfig.ts",
+    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d src/config/ormconfig.ts",
+    "migration:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -d src/config/ormconfig.ts"
   },
   "keywords": [],
   "author": "",
