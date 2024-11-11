@@ -24,5 +24,6 @@ router.post('/register', loginLimiter, AuthController.register);
 router.post('/login', passwordResetLimiter, AuthController.login);
 router.post('/request-password-reset', AuthController.requestPasswordReset);
 router.post('/reset-password', AuthController.resetPassword);
+router.post('/auth0-login', AuthController.auth0Login);
 
 export default router;

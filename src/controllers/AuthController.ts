@@ -1,5 +1,8 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import axios from 'axios';
 import { Request, Response } from 'express';
 import { MoreThan } from 'typeorm';
 import { UserRepository } from '../repositories/UserRepository';
@@ -108,6 +111,33 @@ export class AuthController {
       const { email, password } = req.body;
       const token = await AuthService.login(email, password);
       res.status(200).json({ message: 'Login successful', token });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  public static readonly auth0Login = async (req: Request, res: Response) => {
+    const checkJwt = auth({
+      audience: '{yourApiIdentifier}',
+      issuerBaseURL: `https://dev-cqnhlsmhow6e0vr1.us.auth0.com/`,
+    });
+
+    try {
+      
+      const response = await axios.post(`${process.env.AUTH0_ISSUER_BASE_URL}/oauth/token`, {
+        grant_type: 'password',
+        username: email,
+        password,
+        audience: process.env.AUTH0_AUDIENCE,
+        client_id: process.env.AUTH0_CLIENT_ID,
+        client_secret: process.env.AUTH0_CLIENT_SECRET,
+      });
+
+      const auth0Token = response.data.access_token;
+      res.status(200).json({ message: 'SSO login successful', token: auth0Token });
     } catch (error) {
       console.error(error);
       res.status(400).json({

@@ -19,7 +19,6 @@ export const AppDataSource = new DataSource({
   migrations: ['src/migration/*.ts'],
   
 });
-console.log("password ", process.env.DB_PASS)
 AppDataSource.initialize()
   .then(() => console.log('Data Source has been initialized!'))
   .catch((err) =>
