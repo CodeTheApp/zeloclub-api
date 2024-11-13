@@ -23,7 +23,7 @@ export const AppDataSource = new DataSource({
     CareCharacteristic,
     Application,
   ],
-  migrations: ["src/migration/*.ts"],
+  migrations: [ process.env.NODE_ENV === 'PRODUCTION' ? 'dist/migration/*.js' : "src/migration/*.ts"],
 });
 console.log("password ", process.env.DB_PASS);
 AppDataSource.initialize()
