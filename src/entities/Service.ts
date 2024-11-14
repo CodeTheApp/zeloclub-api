@@ -5,9 +5,11 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Application } from './Application';
 import { CareCharacteristic } from './CareCharacteristic';
 import { User } from './User';
 
@@ -68,6 +70,11 @@ export class Service {
 
   @ManyToOne(() => User, (user) => user.services, { nullable: false })
   createdBy: User; // Relacionamento com o usuário que criou (usuário do tipo backoffice)
+
+  @OneToMany(() => Application, (application) => application.service, {
+    cascade: true,
+  })
+  applications: Application[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,14 +1,15 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
+import { DataSource } from "typeorm";
 dotenv.config();
-import { DataSource } from 'typeorm';
 
-import { CareCharacteristic } from '../entities/CareCharacteristic';
-import { ProfessionalProfile } from '../entities/ProfessionalProfile';
-import { Service } from '../entities/Service';
-import { User } from '../entities/User';
+import { Application } from "../entities/Application";
+import { CareCharacteristic } from "../entities/CareCharacteristic";
+import { ProfessionalProfile } from "../entities/ProfessionalProfile";
+import { Service } from "../entities/Service";
+import { User } from "../entities/User";
 
 export const AppDataSource = new DataSource({
-  type: 'postgres',
+  type: "postgres",
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   username: process.env.DB_USER,
@@ -20,7 +21,7 @@ export const AppDataSource = new DataSource({
   
 });
 AppDataSource.initialize()
-  .then(() => console.log('Data Source has been initialized!'))
+  .then(() => console.log("Data Source has been initialized!"))
   .catch((err) =>
-    console.error('Error during Data Source initialization', err)
+    console.error("Error during Data Source initialization", err)
   );

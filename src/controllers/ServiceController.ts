@@ -53,7 +53,7 @@ export class ServiceController {
       const service = ServiceRepository.create({
         name,
         description,
-        schedules,
+        schedules: JSON.parse(JSON.stringify(schedules)),
         advertiser,
         value,
         location,
