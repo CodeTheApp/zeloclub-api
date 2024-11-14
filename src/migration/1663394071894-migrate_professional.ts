@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table, TableColumn, TableIndex } from "typeorm";
 
-export class MigrateProfessionalProfilesTable1663394071894 implements MigrationInterface {
+export class MigrateProfessionalProfilesTable1663391000000 implements MigrationInterface{
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table, TableColumn, TableForeignKey } from "typeorm";
 
-export class MigrateServicesTable1663394071894 implements MigrationInterface {
+export class MigrateServices1663396000000 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(
@@ -39,7 +39,7 @@ export class MigrateServicesTable1663394071894 implements MigrationInterface {
                     new TableColumn({
                         name: "value",
                         type: "varchar",
-                        default: "A combinar"
+                        default: "'A combinar'"
                     }),
                     new TableColumn({
                         name: "location",

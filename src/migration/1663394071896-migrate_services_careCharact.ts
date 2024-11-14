@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table, TableColumn, TableForeignKey, TableIndex } from "typeorm";
 
-export class MigrateServicesCareCharacteristicsTable1663394071894 implements MigrationInterface {
+export class MigrateServicesCareCharact1663399999998 implements MigrationInterface{
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(
