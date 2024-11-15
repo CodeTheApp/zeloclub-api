@@ -11,10 +11,7 @@ import {
 } from "typeorm";
 import { ProfessionalProfile } from "./ProfessionalProfile";
 import { Service } from "./Service";
-} from 'typeorm';
-import { Application } from './Application';
-import { ProfessionalProfile } from './ProfessionalProfile';
-import { Service } from './Service';
+import { Application } from "./Application";
 
 enum Gender {
   FEMALE = "Female",

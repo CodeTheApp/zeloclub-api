@@ -7,16 +7,7 @@ import { Request, Response } from "express";
 import { MoreThan } from "typeorm";
 import { UserRepository } from "../repositories/UserRepository";
 import { AuthService } from "../services/AuthService";
-import { sendPasswordResetEmail } from "../services/emailService";
 import { User } from "../entities/User";
-
-import axios from 'axios';
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
-import { Request, Response } from 'express';
-import { MoreThan } from 'typeorm';
-import { UserRepository } from '../repositories/UserRepository';
-import { AuthService } from '../services/authService';
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -41,7 +32,7 @@ export class AuthController {
 
       await UserRepository.save(user);
 
-      // Enviar email com o token
+      // Enviar email com o token (implemente este serviço)
       // await sendPasswordResetEmail(user.email, token);
 
       res.status(200).json({ message: 'Password reset email sent' });
@@ -70,7 +61,6 @@ export class AuthController {
         return;
       }
 
-      // Atualizar a senha e limpar os campos de recuperação
       user.password = await bcrypt.hash(newPassword, 10);
       user.resetPasswordToken = null;
       user.resetPasswordExpires = null;
@@ -132,8 +122,7 @@ export class AuthController {
     try {
       const { access_token } = req.body;
 
-      // Recuperar informações do usuário do Auth0
-      const userInfo = await axios.get(
+      const userInfoResponse = await axios.get(
         `${process.env.AUTH0_ISSUER_BASE_URL}/userinfo`,
         {
           headers: {
@@ -142,49 +131,30 @@ export class AuthController {
         }
       );
 
-      const auth0User = userInfo.data;
-
-      
-
-      const userInfo = await axios.get(`${process.env.AUTH0_ISSUER_BASE_URL}`, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      });
-
-      const auth0User = userInfo.data;
+      const auth0User = userInfoResponse.data;
 
       let user = await UserRepository.findOne({
         where: { email: auth0User.email },
       });
 
       if (!user) {
-        // Se não existe, criar usuário básico
         user = new User();
         user.email = auth0User.email;
         user.name = auth0User.name;
-        user.phoneNumber = auth0User.phone_number; 
-        user.avatar = auth0User.picture; 
-        user.completeRegistration = false; 
+        user.phoneNumber = auth0User.phone_number || null;
+        user.avatar = auth0User.picture || null;
+        user.completeRegistration = false;
         await UserRepository.save(user);
       }
 
-      
       if (user.completeRegistration) {
         res.status(200).json({ message: "Login successful", user });
       } else {
         res.status(200).json({
           message: "Please complete your registration.",
-          redirectTo: '/complete-registration',
+          redirectTo: "/complete-registration",
         });
       }
-        throw new Error('User not found');
-      }
-
-      res.status(200).json({
-        message: 'Login successful',
-        user: auth0User,
-      });
     } catch (error) {
       console.error('Auth0 login error:', error);
       res.status(400).json({
@@ -194,31 +164,31 @@ export class AuthController {
     }
   };
 
-  public static readonly completeRegistration = async (req: Request, res: Response) => {
+  public static readonly completeRegistration = async (
+    req: Request,
+    res: Response
+  ) => {
     const { userId, phoneNumber, description, avatar } = req.body;
-  
+
     try {
       const user = await UserRepository.findOne({ where: { id: userId } });
-  
+
       if (!user) {
         res.status(404).json({ message: "User not found" });
         return;
       }
-  
- 
+
       user.phoneNumber = phoneNumber;
       user.description = description;
       user.avatar = avatar;
-      user.completeRegistration = true; 
-  
+      user.completeRegistration = true;
+
       await UserRepository.save(user);
-  
+
       res.status(200).json({ message: "Registration completed successfully" });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Internal server error" });
     }
   };
-  
-  
 }
