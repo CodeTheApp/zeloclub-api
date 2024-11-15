@@ -1,9 +1,9 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from './User';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "./User";
 
-@Entity('professional_profiles')
+@Entity("professional_profiles")
 export class ProfessionalProfile {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @OneToOne(() => User, (user) => user.professionalProfile)
@@ -18,13 +18,13 @@ export class ProfessionalProfile {
   @Column()
   experience: string;
 
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   rating: number;
 
-  @Column({ type: 'float' })
+  @Column({ type: "float" })
   price: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   reviews: number;
 
   @Column({ default: true })
@@ -36,7 +36,7 @@ export class ProfessionalProfile {
   @Column({ default: false })
   validated: boolean;
 
-  @Column('jsonb')
+  @Column("jsonb")
   address: {
     street: string;
     city: string;
@@ -45,7 +45,7 @@ export class ProfessionalProfile {
     complement: string;
   };
 
-  @Column('jsonb')
+  @Column("jsonb")
   certifications: {
     name: string;
     category: string;
@@ -53,7 +53,7 @@ export class ProfessionalProfile {
     validated: boolean;
   }[];
 
-  @Column('jsonb')
+  @Column("jsonb")
   contacts: {
     phone: string;
     email: string;
@@ -61,7 +61,7 @@ export class ProfessionalProfile {
     whatsapp: string;
   };
 
-  @Column('jsonb')
+  @Column("jsonb")
   social: {
     facebook: string;
     twitter: string;
@@ -69,7 +69,7 @@ export class ProfessionalProfile {
     linkedin: string;
   };
 
-  @Column('jsonb')
+  @Column("jsonb")
   services: {
     homecare: boolean;
     nursing: boolean;
@@ -80,14 +80,14 @@ export class ProfessionalProfile {
     cooking: boolean;
   };
 
-  @Column('jsonb')
+  @Column("jsonb")
   schedule: {
     day: string;
     from: string;
     to: string;
   }[];
 
-  @Column('jsonb')
+  @Column("jsonb")
   reviewsList: {
     id: string;
     name: string;

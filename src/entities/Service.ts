@@ -8,23 +8,23 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Application } from './Application';
-import { CareCharacteristic } from './CareCharacteristic';
-import { User } from './User';
+} from "typeorm";
+import { Application } from "./Application";
+import { CareCharacteristic } from "./CareCharacteristic";
+import { User } from "./User";
 
-@Entity('services')
+@Entity("services")
 export class Service {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ length: 100 })
   name: string; // Nome da vaga
 
-  @Column('text')
+  @Column("text")
   description: string; // Descrição da vaga
 
-  @Column('jsonb')
+  @Column("jsonb")
   schedules: {
     day: string;
     from: string;
@@ -36,10 +36,10 @@ export class Service {
   @Column({ length: 100 })
   advertiser: string; // Anunciante
 
-  @Column({ type: 'varchar', default: 'A combinar' })
+  @Column({ type: "varchar", default: "A combinar" })
   value: string; // Valor do plantão (opcional)
 
-  @Column('jsonb')
+  @Column("jsonb")
   location: {
     zip: string;
     street?: string;

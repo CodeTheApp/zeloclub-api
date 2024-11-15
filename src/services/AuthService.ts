@@ -1,9 +1,9 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { Gender, USER_TYPES } from '../../types';
-import { ProfessionalProfile } from '../entities/ProfessionalProfile';
-import { User } from '../entities/User';
-import { UserRepository } from '../repositories/UserRepository';
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { Gender, USER_TYPES } from "../../types";
+import { ProfessionalProfile } from "../entities/ProfessionalProfile";
+import { User } from "../entities/User";
+import { UserRepository } from "../repositories/UserRepository";
 
 export class AuthService {
   static async register(
@@ -17,12 +17,12 @@ export class AuthService {
   ): Promise<User> {
     const existingUser = await UserRepository.findOneBy({ email });
     if (existingUser) {
-      throw new Error('Email already in use');
+      throw new Error("Email already in use");
     }
 
     const existingPhone = await UserRepository.findOneBy({ phoneNumber });
     if (existingPhone) {
-      throw new Error('Phone number already in use');
+      throw new Error("Phone number already in use");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,18 +53,18 @@ export class AuthService {
     const user = await UserRepository.findOneBy({ email });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid email or password');
+      throw new Error("Invalid email or password");
     }
 
     if (user.isDeleted) {
-      throw new Error('User is not active anymore');
+      throw new Error("User is not active anymore");
     }
 
     // Gerando o token JWT
     const token = jwt.sign(
       { id: user.id, userType: user.userType },
       process.env.JWT_SECRET as string,
-      { expiresIn: '1d' }
+      { expiresIn: "1d" }
     );
 
     return token;

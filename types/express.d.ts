@@ -1,6 +1,6 @@
-import { USER_TYPES } from '../src/entities/User';
+import { USER_TYPES } from "../src/entities/User";
 
-declare module 'express-serve-static-core' {
+declare module "express-serve-static-core" {
   interface Request {
     user?: {
       id: string;

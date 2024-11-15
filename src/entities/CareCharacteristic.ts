@@ -6,18 +6,18 @@ import {
   ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Service } from './Service';
+} from "typeorm";
+import { Service } from "./Service";
 
-@Entity('careCharacteristics')
+@Entity("careCharacteristics")
 export class CareCharacteristic {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true, length: 100 })
   name: string; // Nome da característica, por exemplo, "Cuidados básicos de higiene"
 
-  @Column('text')
+  @Column("text")
   description: string; // Descrição detalhada da característica
 
   // Relacionamento muitos-para-muitos com Service

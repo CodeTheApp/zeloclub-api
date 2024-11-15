@@ -5,13 +5,13 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Service } from './Service';
-import { User } from './User';
+} from "typeorm";
+import { Service } from "./Service";
+import { User } from "./User";
 
-@Entity('applications')
+@Entity("applications")
 export class Application {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @ManyToOne(() => User, (user) => user.applications, { nullable: false })
@@ -25,8 +25,8 @@ export class Application {
   @CreateDateColumn()
   appliedAt: Date;
 
-  @Column({ default: 'Pending' })
-  status: 'Pending' | 'Accepted' | 'Rejected';
+  @Column({ default: "Pending" })
+  status: "Pending" | "Accepted" | "Rejected";
 
   @Column({ default: false })
   isDeleted: boolean;
