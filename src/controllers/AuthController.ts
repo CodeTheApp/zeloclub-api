@@ -8,6 +8,7 @@ import { MoreThan } from "typeorm";
 import { UserRepository } from "../repositories/UserRepository";
 import { AuthService } from "../services/AuthService";
 import { sendPasswordResetEmail } from "../services/emailService";
+import { User } from "../entities/User";
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -122,31 +123,44 @@ export class AuthController {
   public static readonly auth0Login = async (req: Request, res: Response) => {
     try {
       const { access_token } = req.body;
-  
-   
+
+      // Recuperar informações do usuário do Auth0
       const userInfo = await axios.get(
-        `${process.env.AUTH0_ISSUER_BASE_URL}`,
+        `${process.env.AUTH0_ISSUER_BASE_URL}/userinfo`,
         {
           headers: {
-            Authorization: `Bearer ${access_token}`,  
+            Authorization: `Bearer ${access_token}`,
           },
         }
       );
-  
-      const auth0User = userInfo.data;  
+
+      const auth0User = userInfo.data;
+
       
       let user = await UserRepository.findOne({
-        where: { email: auth0User.email },  
+        where: { email: auth0User.email },
       });
 
       if (!user) {
-        throw new Error("User not found"); 
+        // Se não existe, criar usuário básico
+        user = new User();
+        user.email = auth0User.email;
+        user.name = auth0User.name;
+        user.phoneNumber = auth0User.phone_number; 
+        user.avatar = auth0User.picture; 
+        user.completeRegistration = false; 
+        await UserRepository.save(user);
       }
 
-      res.status(200).json({
-        message: "Login successful",
-        user: auth0User,  
-      });
+      
+      if (user.completeRegistration) {
+        res.status(200).json({ message: "Login successful", user });
+      } else {
+        res.status(200).json({
+          message: "Please complete your registration.",
+          redirectTo: '/complete-registration',
+        });
+      }
     } catch (error) {
       console.error("Auth0 login error:", error);
       res.status(400).json({
@@ -155,5 +169,32 @@ export class AuthController {
       });
     }
   };
+
+  public static readonly completeRegistration = async (req: Request, res: Response) => {
+    const { userId, phoneNumber, description, avatar } = req.body;
+  
+    try {
+      const user = await UserRepository.findOne({ where: { id: userId } });
+  
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+  
+ 
+      user.phoneNumber = phoneNumber;
+      user.description = description;
+      user.avatar = avatar;
+      user.completeRegistration = true; 
+  
+      await UserRepository.save(user);
+  
+      res.status(200).json({ message: "Registration completed successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
   
 }
