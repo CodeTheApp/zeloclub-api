@@ -124,11 +124,6 @@ export class AuthController {
       const { token } = req.body;
 
       const user = await AuthService.getUserFromToken(token);
-
-      if (!user) {
-        throw new Error('User not found');
-      }
-
       res.status(200).json({ user });
     } catch (error) {
       console.error(error);
