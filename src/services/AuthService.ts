@@ -48,7 +48,6 @@ export class AuthService {
     return await UserRepository.save(user);
   }
 
-  // Função de login do usuário
   static async login(email: string, password: string): Promise<string> {
     const user = await UserRepository.findOneBy({ email });
 
@@ -68,5 +67,20 @@ export class AuthService {
     );
 
     return token;
+  }
+
+  static async getUserFromToken(token: string): Promise<User> {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      id: string;
+      userType: USER_TYPES;
+    };
+
+    const user = await UserRepository.findOneBy({ id: decoded.id });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user;
   }
 }

@@ -2,10 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { AuthController } from '../controllers/AuthController';
 
-
-
 const router = Router();
-
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -28,5 +25,6 @@ router.post('/login', passwordResetLimiter, AuthController.login);
 router.post('/request-password-reset', AuthController.requestPasswordReset);
 router.post('/reset-password', AuthController.resetPassword);
 router.post('/auth0-login', AuthController.auth0Login);
+router.post('/me', AuthController.me);
 
 export default router;
