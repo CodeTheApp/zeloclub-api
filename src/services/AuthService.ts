@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { Gender, USER_TYPES } from '../../types';
 import { ProfessionalProfile } from '../entities/ProfessionalProfile';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/UserRepository';
-import { Gender, USER_TYPES } from '../types';
 
 export class AuthService {
   static async register(
@@ -51,8 +51,13 @@ export class AuthService {
   // Função de login do usuário
   static async login(email: string, password: string): Promise<string> {
     const user = await UserRepository.findOneBy({ email });
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new Error('Invalid email or password');
+    }
+
+    if (user.isDeleted) {
+      throw new Error('User is not active anymore');
     }
 
     // Gerando o token JWT

@@ -11,6 +11,10 @@ import {
 } from "typeorm";
 import { ProfessionalProfile } from "./ProfessionalProfile";
 import { Service } from "./Service";
+} from 'typeorm';
+import { Application } from './Application';
+import { ProfessionalProfile } from './ProfessionalProfile';
+import { Service } from './Service';
 
 enum Gender {
   FEMALE = "Female",
@@ -70,6 +74,11 @@ export class User {
 
   @OneToMany(() => Service, (service) => service.createdBy)
   services: Service[];
+
+  @OneToMany(() => Application, (application) => application.applicant, {
+    cascade: true,
+  })
+  applications: Application[];
 
   @Column({ type: "varchar", nullable: true })
   resetPasswordToken: string | null;

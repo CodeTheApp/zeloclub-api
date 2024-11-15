@@ -1,7 +1,7 @@
 import { Router } from 'express';
+import { USER_TYPES } from '../../types';
 import { CareCharacteristicController } from '../controllers/CareCharacteristicController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
-import { USER_TYPES } from '../types';
 
 const router = Router();
 

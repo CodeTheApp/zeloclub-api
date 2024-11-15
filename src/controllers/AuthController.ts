@@ -1,4 +1,4 @@
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -10,6 +10,14 @@ import { AuthService } from "../services/AuthService";
 import { sendPasswordResetEmail } from "../services/emailService";
 import { User } from "../entities/User";
 
+import axios from 'axios';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { Request, Response } from 'express';
+import { MoreThan } from 'typeorm';
+import { UserRepository } from '../repositories/UserRepository';
+import { AuthService } from '../services/authService';
+
 export class AuthController {
   public static readonly requestPasswordReset = async (
     req: Request,
@@ -20,14 +28,14 @@ export class AuthController {
     try {
       const user = await UserRepository.findOne({ where: { email } });
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
       const token =
-        crypto.randomBytes(3).toString("hex") +
-        "-" +
-        crypto.randomBytes(3).toString("hex");
+        crypto.randomBytes(3).toString('hex') +
+        '-' +
+        crypto.randomBytes(3).toString('hex');
       user.resetPasswordToken = token;
       user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hora
 
@@ -36,10 +44,10 @@ export class AuthController {
       // Enviar email com o token
       // await sendPasswordResetEmail(user.email, token);
 
-      res.status(200).json({ message: "Password reset email sent" });
+      res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   };
 
@@ -58,7 +66,7 @@ export class AuthController {
       });
 
       if (!user) {
-        res.status(400).json({ message: "Invalid or expired token" });
+        res.status(400).json({ message: 'Invalid or expired token' });
         return;
       }
 
@@ -69,10 +77,10 @@ export class AuthController {
 
       await UserRepository.save(user);
 
-      res.status(200).json({ message: "Password has been reset successfully" });
+      res.status(200).json({ message: 'Password has been reset successfully' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   };
 
@@ -98,11 +106,11 @@ export class AuthController {
         gender
       );
 
-      res.status(201).json({ message: "User registered successfully", user });
+      res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -111,11 +119,11 @@ export class AuthController {
     try {
       const { email, password } = req.body;
       const token = await AuthService.login(email, password);
-      res.status(200).json({ message: "Login successful", token });
+      res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -137,6 +145,15 @@ export class AuthController {
       const auth0User = userInfo.data;
 
       
+
+      const userInfo = await axios.get(`${process.env.AUTH0_ISSUER_BASE_URL}`, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+
+      const auth0User = userInfo.data;
+
       let user = await UserRepository.findOne({
         where: { email: auth0User.email },
       });
@@ -161,11 +178,18 @@ export class AuthController {
           redirectTo: '/complete-registration',
         });
       }
+        throw new Error('User not found');
+      }
+
+      res.status(200).json({
+        message: 'Login successful',
+        user: auth0User,
+      });
     } catch (error) {
-      console.error("Auth0 login error:", error);
+      console.error('Auth0 login error:', error);
       res.status(400).json({
         message:
-          error instanceof Error ? error.message : "Authentication failed",
+          error instanceof Error ? error.message : 'Authentication failed',
       });
     }
   };
