@@ -1,7 +1,7 @@
 import { Router } from 'express';
+import { USER_TYPES } from '../../types';
 import { ApplicationController } from '../controllers/ApplicationController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
-import { USER_TYPES } from '../types';
 
 const router = Router();
 

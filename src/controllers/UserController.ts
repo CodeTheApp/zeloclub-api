@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt';
 import { RequestHandler } from 'express';
+import { USER_TYPES } from '../../types';
 import { ProfessionalProfile } from '../entities/ProfessionalProfile';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/UserRepository';
-import { USER_TYPES } from '../types';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (req, res) => {

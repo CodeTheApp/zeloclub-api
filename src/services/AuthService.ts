@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { Gender, USER_TYPES } from '../../types';
 import { ProfessionalProfile } from '../entities/ProfessionalProfile';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/UserRepository';
-import { Gender, USER_TYPES } from '../types';
 
 export class AuthService {
   static async register(

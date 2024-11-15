@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { auth as auth0Auth } from 'express-oauth2-jwt-bearer';
 import jwt from 'jsonwebtoken';
-import { USER_TYPES } from '../types';
+import { USER_TYPES } from '../../types';
 dotenv.config();
 
 export const authenticate: RequestHandler = (req, res, next) => {

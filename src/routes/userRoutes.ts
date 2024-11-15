@@ -1,9 +1,9 @@
 // src/routes/userRoutes.ts
 import { Router } from 'express';
+import { USER_TYPES } from '../../types';
 import { upload } from '../config/uploadConfig';
 import { UserController } from '../controllers/UserController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
-import { USER_TYPES } from '../types';
 
 const router = Router();
 
