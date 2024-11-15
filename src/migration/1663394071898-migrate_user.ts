@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table, TableColumn, TableForeignKey, TableUnique } from "typeorm";
 
-export class MigrateUsersTable1663394071894 implements MigrationInterface {
+export class MigrateUsersTable1663395000000 implements MigrationInterface{
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(
@@ -49,13 +49,13 @@ export class MigrateUsersTable1663394071894 implements MigrationInterface {
                         name: "gender",
                         type: "enum",
                         enum: ["Not Informed", "Male", "Female", "Other"],
-                        default: "Not Informed"
+                        default: "'Not Informed'"
                     }),
                     new TableColumn({
                         name: "userType",
                         type: "enum",
                         enum: ["Customer", "Professional"],
-                        default: "Customer"
+                        default: "'Customer'" 
                     }),
                     new TableColumn({
                         name: "resetPasswordToken",
@@ -91,6 +91,7 @@ export class MigrateUsersTable1663394071894 implements MigrationInterface {
             })
         );
 
+       
         await queryRunner.createUniqueConstraint("users", new TableUnique({
             name: "UQ_1e3d0240b49c40521aaeb953293",
             columnNames: ["phoneNumber"]
@@ -106,6 +107,7 @@ export class MigrateUsersTable1663394071894 implements MigrationInterface {
             columnNames: ["professionalProfileId"]
         }));
 
+      
         await queryRunner.createForeignKey("users", new TableForeignKey({
             columnNames: ["professionalProfileId"],
             referencedColumnNames: ["id"],
@@ -118,5 +120,4 @@ export class MigrateUsersTable1663394071894 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.dropTable("users");
     }
-
 }

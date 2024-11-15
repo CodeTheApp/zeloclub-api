@@ -1,10 +1,13 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+import axios from 'axios';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { MoreThan } from 'typeorm';
 import { UserRepository } from '../repositories/UserRepository';
-import { AuthService } from '../services/AuthService';
-import { sendPasswordResetEmail } from '../services/emailService';
+import { AuthService } from '../services/authService';
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -112,6 +115,39 @@ export class AuthController {
       console.error(error);
       res.status(400).json({
         message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  public static readonly auth0Login = async (req: Request, res: Response) => {
+    try {
+      const { access_token } = req.body;
+
+      const userInfo = await axios.get(`${process.env.AUTH0_ISSUER_BASE_URL}`, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+
+      const auth0User = userInfo.data;
+
+      let user = await UserRepository.findOne({
+        where: { email: auth0User.email },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      res.status(200).json({
+        message: 'Login successful',
+        user: auth0User,
+      });
+    } catch (error) {
+      console.error('Auth0 login error:', error);
+      res.status(400).json({
+        message:
+          error instanceof Error ? error.message : 'Authentication failed',
       });
     }
   };

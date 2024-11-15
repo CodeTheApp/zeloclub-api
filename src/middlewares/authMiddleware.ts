@@ -1,6 +1,9 @@
+import * as dotenv from 'dotenv';
 import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { auth as auth0Auth } from 'express-oauth2-jwt-bearer';
 import jwt from 'jsonwebtoken';
-import { USER_TYPES } from '../types'; // ajuste o caminho conforme a estrutura do seu projeto
+import { USER_TYPES } from '../../types';
+dotenv.config();
 
 export const authenticate: RequestHandler = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -10,17 +13,29 @@ export const authenticate: RequestHandler = (req, res, next) => {
     return;
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
-      userType: string;
-    };
-    (req as any).user = decoded;
-    next();
-  } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: 'Invalid token.' });
-  }
+  const auth0Middleware = auth0Auth({
+    audience: process.env.AUTH0_AUDIENCE!,
+    issuerBaseURL: process.env.AUTH0_ISSUER!,
+  });
+
+  auth0Middleware(req, res, (err: any) => {
+    if (!err) {
+      (req as any).user = (req as any).auth;
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+        id: string;
+        userType: string;
+      };
+      (req as any).user = decoded;
+      next();
+    } catch (error) {
+      console.error(error);
+      res.status(401).json({ message: 'Invalid token.' });
+    }
+  });
 };
 
 export const authorize = (allowedRoles: USER_TYPES[]) => {

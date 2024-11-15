@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { USER_TYPES } from '../../types';
 import { ServiceController } from '../controllers/ServiceController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
-import { USER_TYPES } from '../types';
 
 const router = Router();
 
