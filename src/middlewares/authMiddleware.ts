@@ -1,9 +1,9 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
 import { NextFunction, Request, RequestHandler, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { auth as auth0Auth } from 'express-oauth2-jwt-bearer';
-import { USER_TYPES } from '../types'; 
+import jwt from 'jsonwebtoken';
+import { USER_TYPES } from '../types';
+dotenv.config();
 
 export const authenticate: RequestHandler = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -20,10 +20,9 @@ export const authenticate: RequestHandler = (req, res, next) => {
 
   auth0Middleware(req, res, (err: any) => {
     if (!err) {
-      (req as any).user = (req as any).auth; 
+      (req as any).user = (req as any).auth;
       return next();
     }
-
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
