@@ -2,12 +2,6 @@ import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 dotenv.config();
 
-import { Application } from '../entities/Application';
-import { CareCharacteristic } from '../entities/CareCharacteristic';
-import { ProfessionalProfile } from '../entities/ProfessionalProfile';
-import { Service } from '../entities/Service';
-import { User } from '../entities/User';
-
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
@@ -15,15 +9,11 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  synchronize: false,
-  entities: [
-    ProfessionalProfile,
-    User,
-    Service,
-    CareCharacteristic,
-    Application,
-  ],
+  entities: ['src/entities/**/*.ts'],
   migrations: ['src/migration/*.ts'],
+  logging: process.env.NODE_ENV === 'development',
+  synchronize: false,
+  migrationsRun: false,
 });
 AppDataSource.initialize()
   .then(() => console.log('Data Source has been initialized!'))

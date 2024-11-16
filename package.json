@@ -11,7 +11,9 @@
     "migration:create": "npm run typeorm migration:create",
     "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/config/ormconfig.ts",
     "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d src/config/ormconfig.ts",
-    "migration:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -d src/config/ormconfig.ts"
+    "migration:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -d src/config/ormconfig.ts",
+    "db:kill-connections": "psql -d postgres -c \"SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'zeloclubapi' AND pid <> pg_backend_pid();\"",
+    "db:reset": "npm run db:kill-connections && dropdb zeloclubapi && createdb zeloclubapi && npm run migration:run"
   },
   "keywords": [],
   "author": "",
