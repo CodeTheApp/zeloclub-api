@@ -118,6 +118,20 @@ export class AuthController {
     }
   };
 
+  public static readonly me = async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body;
+
+      const user = await AuthService.getUserFromToken(token);
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
   public static readonly auth0Login = async (req: Request, res: Response) => {
     try {
       const { access_token } = req.body;
