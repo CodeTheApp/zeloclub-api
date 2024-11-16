@@ -3,8 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import path from 'path';
-import 'reflect-metadata';
-import { AppDataSource } from './config/ormconfig';
+import { prisma } from './lib/prisma'; // Substitui o AppDataSource
 
 import { auth } from 'express-openid-connect';
 import applicationRoutes from './routes/applicationRoutes';
@@ -39,11 +38,28 @@ app.get('/', (req, res) => {
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
 
-AppDataSource.initialize()
-  .then(() => {
+// Inicialização do servidor
+const startServer = async () => {
+  try {
+    // Testar conexão com o Prisma
+    await prisma.$connect();
     console.log('Database connected');
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
-  })
-  .catch((error) => console.log(error));
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer().catch((error) => {
+  console.error('Unhandled error:', error);
+  process.exit(1);
+});
+
+// Garantir que o Prisma seja desconectado ao encerrar
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});

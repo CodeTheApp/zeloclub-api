@@ -12,6 +12,8 @@ const serviceLimiter = rateLimit({
   message: {
     message: 'Too many login attempts. Please try again later.',
   },
+  standardHeaders: true, // Retorna info de rate limit no `RateLimit-*` headers
+  legacyHeaders: false, // Desabilita os headers `X-RateLimit-*`
 });
 
 // Rota para criar um serviço (somente para usuários do tipo Backoffice)
