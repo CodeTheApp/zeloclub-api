@@ -1,5 +1,5 @@
-import { AppDataSource } from "../config/ormconfig";
-import { CareCharacteristic } from "../entities/CareCharacteristic";
+import { AppDataSource } from '../config/ormconfig';
+import { CareCharacteristic } from '../entities/CareCharacteristic';
 
 export const CareCharacteristicRepository = AppDataSource.getRepository(
   CareCharacteristic

@@ -70,16 +70,16 @@ export type User = {
 };
 
 export enum Gender {
-  FEMALE = "Female",
-  MALE = "Male",
-  OTHER = "Other",
-  NOT_INFORMED = "Not Informed",
+  FEMALE = 'Female',
+  MALE = 'Male',
+  OTHER = 'Other',
+  NOT_INFORMED = 'Not Informed',
 }
 
 export enum USER_TYPES {
-  CUSTOMER = "Customer",
-  BACKOFFICE = "Backoffice",
-  PROFESSIONAL = "Professional",
+  CUSTOMER = 'Customer',
+  BACKOFFICE = 'Backoffice',
+  PROFESSIONAL = 'Professional',
 }
 
 // SERVICE TYPES

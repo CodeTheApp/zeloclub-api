@@ -1,9 +1,9 @@
-import bcrypt from "bcrypt";
-import { RequestHandler } from "express";
-import { USER_TYPES } from "../../types";
-import { ProfessionalProfile } from "../entities/ProfessionalProfile";
-import { User } from "../entities/User";
-import { UserRepository } from "../repositories/UserRepository";
+import bcrypt from 'bcrypt';
+import { RequestHandler } from 'express';
+import { USER_TYPES } from '../../types';
+import { ProfessionalProfile } from '../entities/ProfessionalProfile';
+import { User } from '../entities/User';
+import { UserRepository } from '../repositories/UserRepository';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (req, res) => {
@@ -11,7 +11,7 @@ export class UserController {
     const user = await UserRepository.findOneBy({ id });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
@@ -21,11 +21,11 @@ export class UserController {
       await UserRepository.save(user);
 
       res.status(200).json({
-        message: "Avatar uploaded successfully",
+        message: 'Avatar uploaded successfully',
         avatarUrl: user.avatar,
       });
     } else {
-      res.status(400).json({ message: "No file uploaded" });
+      res.status(400).json({ message: 'No file uploaded' });
     }
   };
 
@@ -34,12 +34,12 @@ export class UserController {
 
     const user = await UserRepository.findOneBy({ id });
     if (!user || user.isDeleted) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
       return;
     }
 
     await UserRepository.softDeleteUser(id);
-    res.status(200).json({ message: "User has been soft deleted" });
+    res.status(200).json({ message: 'User has been soft deleted' });
   };
 
   public static readonly createProfessional: RequestHandler = async (
@@ -76,13 +76,13 @@ export class UserController {
       // Verifica se o email ou número de telefone já existem
       const existingUser = await UserRepository.findOneBy({ email });
       if (existingUser) {
-        res.status(400).json({ message: "Email already in use" });
+        res.status(400).json({ message: 'Email already in use' });
         return;
       }
 
       const existingPhone = await UserRepository.findOneBy({ phoneNumber });
       if (existingPhone) {
-        res.status(400).json({ message: "Phone number already in use" });
+        res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
 
@@ -127,10 +127,10 @@ export class UserController {
 
       res
         .status(201)
-        .json({ message: "Professional user created successfully", user });
+        .json({ message: 'Professional user created successfully', user });
     } catch (error) {
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -152,13 +152,13 @@ export class UserController {
 
       const existingUser = await UserRepository.findOneBy({ email });
       if (existingUser) {
-        res.status(400).json({ message: "Email already in use" });
+        res.status(400).json({ message: 'Email already in use' });
         return;
       }
 
       const existingPhone = await UserRepository.findOneBy({ phoneNumber });
       if (existingPhone) {
-        res.status(400).json({ message: "Phone number already in use" });
+        res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
 
@@ -178,11 +178,11 @@ export class UserController {
 
       res
         .status(201)
-        .json({ message: "Backoffice user created successfully", user });
+        .json({ message: 'Backoffice user created successfully', user });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -212,11 +212,11 @@ export class UserController {
       // Encontra o usuário pelo ID
       const user = await UserRepository.findOne({
         where: { id },
-        relations: ["professionalProfile"],
+        relations: ['professionalProfile'],
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return; // Apenas sai da função, sem retornar um valor
       }
 
@@ -256,11 +256,11 @@ export class UserController {
       // Salva o usuário e o perfil atualizado
       await UserRepository.save(user);
 
-      res.status(200).json({ message: "Profile completed successfully", user });
+      res.status(200).json({ message: 'Profile completed successfully', user });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -270,11 +270,11 @@ export class UserController {
       const { id } = req.params;
       const user = await UserRepository.findOne({
         where: { id },
-        relations: ["professionalProfile"],
+        relations: ['professionalProfile'],
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
@@ -282,7 +282,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -290,7 +290,7 @@ export class UserController {
   public static readonly getAllUsers: RequestHandler = async (req, res) => {
     try {
       const users = await UserRepository.find({
-        relations: ["professionalProfile"],
+        relations: ['professionalProfile'],
         where: { isDeleted: false },
       });
 
@@ -298,7 +298,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -316,7 +316,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };

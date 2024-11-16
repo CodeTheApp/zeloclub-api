@@ -1,15 +1,15 @@
-import * as dotenv from "dotenv";
-import { NextFunction, Request, RequestHandler, Response } from "express";
-import { auth as auth0Auth } from "express-oauth2-jwt-bearer";
-import jwt from "jsonwebtoken";
-import { USER_TYPES } from "../../types";
+import * as dotenv from 'dotenv';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { auth as auth0Auth } from 'express-oauth2-jwt-bearer';
+import jwt from 'jsonwebtoken';
+import { USER_TYPES } from '../../types';
 dotenv.config();
 
 export const authenticate: RequestHandler = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    res.status(401).json({ message: "Access denied. No token provided." });
+    res.status(401).json({ message: 'Access denied. No token provided.' });
     return;
   }
 
@@ -33,7 +33,7 @@ export const authenticate: RequestHandler = (req, res, next) => {
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: "Invalid token." });
+      res.status(401).json({ message: 'Invalid token.' });
     }
   });
 };
@@ -43,13 +43,13 @@ export const authorize = (allowedRoles: USER_TYPES[]) => {
     const user = (req as any).user;
 
     if (!user) {
-      res.status(401).json({ message: "Unauthorized: No user found" });
+      res.status(401).json({ message: 'Unauthorized: No user found' });
       return;
     }
 
     if (!allowedRoles.includes(user.userType)) {
       res.status(403).json({
-        message: "Forbidden: You do not have access to this resource",
+        message: 'Forbidden: You do not have access to this resource',
       });
       return;
     }

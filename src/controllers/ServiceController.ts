@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import { CareCharacteristicRepository } from "../repositories/CareCharacteristicRepository";
-import { ServiceRepository } from "../repositories/ServiceRepository";
-import { UserRepository } from "../repositories/UserRepository";
+import { Request, Response } from 'express';
+import { CareCharacteristicRepository } from '../repositories/CareCharacteristicRepository';
+import { ServiceRepository } from '../repositories/ServiceRepository';
+import { UserRepository } from '../repositories/UserRepository';
 
 export class ServiceController {
   static async deleteService(req: Request, res: Response) {
@@ -9,12 +9,12 @@ export class ServiceController {
 
     const service = await ServiceRepository.findOneBy({ id });
     if (!service || service.isDeleted) {
-      res.status(404).json({ message: "Service not found" });
+      res.status(404).json({ message: 'Service not found' });
       return;
     }
 
     await ServiceRepository.softDeleteService(id);
-    res.status(200).json({ message: "Service has been soft deleted" });
+    res.status(200).json({ message: 'Service has been soft deleted' });
   }
 
   static async createService(req: Request, res: Response) {
@@ -35,7 +35,7 @@ export class ServiceController {
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
@@ -66,14 +66,14 @@ export class ServiceController {
       res.status(201).json(service);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
   static async getAllServices(req: Request, res: Response) {
     const services = await ServiceRepository.find({
       where: { isActive: true, isDeleted: false },
-      relations: ["careCharacteristic", "createdBy"],
+      relations: ['careCharacteristic', 'createdBy'],
     });
     res.status(200).json(services);
   }
