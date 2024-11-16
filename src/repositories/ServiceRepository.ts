@@ -1,5 +1,5 @@
-import { AppDataSource } from '../config/ormconfig';
-import { Service } from '../entities/Service';
+import { AppDataSource } from "../config/ormconfig";
+import { Service } from "../entities/Service";
 
 export const ServiceRepository = AppDataSource.getRepository(Service).extend({
   async softDeleteService(id: string) {

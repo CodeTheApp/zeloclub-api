@@ -1,25 +1,25 @@
-import { Router } from 'express';
-import { USER_TYPES } from '../../types';
-import { ApplicationController } from '../controllers/ApplicationController';
-import { authenticate, authorize } from '../middlewares/authMiddleware';
+import { Router } from "express";
+import { USER_TYPES } from "../../types";
+import { ApplicationController } from "../controllers/ApplicationController";
+import { authenticate, authorize } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 router.post(
-  '/apply',
+  "/apply",
   authenticate,
   authorize([USER_TYPES.PROFESSIONAL]),
   ApplicationController.applyForService
 );
 
 router.get(
-  '/service/:serviceId/applications',
+  "/service/:serviceId/applications",
   authenticate,
   ApplicationController.getApplicationsForService
 );
 
 router.patch(
-  '/:applicationId/status',
+  "/:applicationId/status",
   authenticate,
   authorize([USER_TYPES.CUSTOMER, USER_TYPES.BACKOFFICE]),
   ApplicationController.updateApplicationStatus

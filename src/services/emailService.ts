@@ -1,12 +1,12 @@
-import 'dotenv/config';
-import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
+import "dotenv/config";
+import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 
 export const sendPasswordResetEmail = async (email: string, token: string) => {
   const mailerSend = new MailerSend({
-    apiKey: process.env.SENDGRID_API_KEY ?? '',
+    apiKey: process.env.SENDGRID_API_KEY ?? "",
   });
 
-  const sentFrom = new Sender('contato@zeloclub.com.br', 'Zeloclub');
+  const sentFrom = new Sender("contato@zeloclub.com.br", "Zeloclub");
 
   const recipients = [new Recipient(email)];
 
@@ -14,8 +14,8 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     {
       email: email,
       data: {
-        account_name: 'Zeloclub',
-        support_email: 'contato@zeloclub.com.br',
+        account_name: "Zeloclub",
+        support_email: "contato@zeloclub.com.br",
         token: token,
       },
     },
@@ -25,8 +25,8 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     .setFrom(sentFrom)
     .setTo(recipients)
     .setReplyTo(sentFrom)
-    .setSubject('Recuperação de senha')
-    .setTemplateId('vywj2lp61zj47oqz')
+    .setSubject("Recuperação de senha")
+    .setTemplateId("vywj2lp61zj47oqz")
     .setPersonalization(personalization);
 
   await mailerSend.email.send(emailParams);
@@ -39,10 +39,10 @@ export const sendNotificationEmail = async (
   content: string
 ) => {
   const mailerSend = new MailerSend({
-    apiKey: process.env.SENDGRID_API_KEY ?? '',
+    apiKey: process.env.SENDGRID_API_KEY ?? "",
   });
 
-  const sentFrom = new Sender('contato@zeloclub.com.br', 'Zeloclub');
+  const sentFrom = new Sender("contato@zeloclub.com.br", "Zeloclub");
 
   const recipients = [new Recipient(email)];
 
@@ -50,8 +50,8 @@ export const sendNotificationEmail = async (
     {
       email: email,
       data: {
-        account_name: 'Zeloclub',
-        support_email: 'contato@zeloclub.com.br',
+        account_name: "Zeloclub",
+        support_email: "contato@zeloclub.com.br",
         content: content,
       },
     },
@@ -62,7 +62,7 @@ export const sendNotificationEmail = async (
     .setTo(recipients)
     .setReplyTo(sentFrom)
     .setSubject(subject)
-    .setTemplateId('vywj2lp61zj47oqz')
+    .setTemplateId("vywj2lp61zj47oqz")
     .setPersonalization(personalization);
 
   await mailerSend.email.send(emailParams);

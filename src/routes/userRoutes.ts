@@ -1,15 +1,15 @@
 // src/routes/userRoutes.ts
-import { Router } from 'express';
-import { USER_TYPES } from '../../types';
-import { upload } from '../config/uploadConfig';
-import { UserController } from '../controllers/UserController';
-import { authenticate, authorize } from '../middlewares/authMiddleware';
+import { Router } from "express";
+import { USER_TYPES } from "../../types";
+import { upload } from "../config/uploadConfig";
+import { UserController } from "../controllers/UserController";
+import { authenticate, authorize } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 // Endpoint para listar os usuários do tipo backoffice
 router.get(
-  '/backoffice',
+  "/backoffice",
   authenticate,
   authorize([USER_TYPES.BACKOFFICE]),
   UserController.getAllBackofficeUsers
@@ -17,39 +17,39 @@ router.get(
 
 // Endpoint para criar um usuário de backoffice
 router.post(
-  '/backoffice',
+  "/backoffice",
   authenticate,
   authorize([USER_TYPES.BACKOFFICE]),
   UserController.createBackofficeUser
 );
 
 // Endpoint para criar um profissional
-router.post('/professional', authenticate, UserController.createProfessional);
+router.post("/professional", authenticate, UserController.createProfessional);
 
 // Endpoint para obter os dados de um usuário por ID
-router.get('/:id', UserController.getUserById);
+router.get("/:id", UserController.getUserById);
 
 router.delete(
-  '/:id',
+  "/:id",
   authenticate,
   authorize([USER_TYPES.BACKOFFICE]),
   UserController.deleteUser
 );
 
 // Endpoint para buscar todos os users
-router.get('/', authenticate, UserController.getAllUsers);
+router.get("/", authenticate, UserController.getAllUsers);
 
 // Endpoint para completar o perfil de um usuário e transformá-lo em profissional
 router.patch(
-  '/:id/complete-profile',
+  "/:id/complete-profile",
   authenticate,
   UserController.completeProfile
 );
 
 router.patch(
-  '/:id/avatar',
+  "/:id/avatar",
   authenticate,
-  upload.single('avatar'), // Middleware de upload usando S3
+  upload.single("avatar"), // Middleware de upload usando S3
   UserController.uploadAvatar
 );
 
