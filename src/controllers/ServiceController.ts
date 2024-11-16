@@ -1,20 +1,31 @@
+// src/controllers/ServiceController.ts
 import { Request, Response } from 'express';
-import { CareCharacteristicRepository } from '../repositories/CareCharacteristicRepository';
-import { ServiceRepository } from '../repositories/ServiceRepository';
-import { UserRepository } from '../repositories/UserRepository';
+import { prisma } from '../lib/prisma';
 
 export class ServiceController {
   static async deleteService(req: Request, res: Response) {
     const { id } = req.params;
 
-    const service = await ServiceRepository.findOneBy({ id });
-    if (!service || service.isDeleted) {
-      res.status(404).json({ message: 'Service not found' });
-      return;
-    }
+    try {
+      const service = await prisma.service.findUnique({
+        where: { id },
+      });
 
-    await ServiceRepository.softDeleteService(id);
-    res.status(200).json({ message: 'Service has been soft deleted' });
+      if (!service || service.isDeleted) {
+        res.status(404).json({ message: 'Service not found' });
+        return;
+      }
+
+      await prisma.service.update({
+        where: { id },
+        data: { isDeleted: true },
+      });
+
+      res.status(200).json({ message: 'Service has been soft deleted' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   }
 
   static async createService(req: Request, res: Response) {
@@ -27,10 +38,10 @@ export class ServiceController {
         value,
         location,
         contactPhone,
-        careCharacteristics, // Verifique se o nome da variável corresponde ao que foi enviado no body
+        careCharacteristics,
       } = req.body;
 
-      const user = await UserRepository.findOne({
+      const user = await prisma.user.findUnique({
         where: { id: (req as any).user.id },
       });
 
@@ -39,30 +50,39 @@ export class ServiceController {
         return;
       }
 
-      // Certifique-se de que careCharacteristics seja um array antes de usar .map()
+      // Buscar características existentes
       const characteristics = careCharacteristics
-        ? await Promise.all(
-            careCharacteristics.map(async (characteristicName: string) => {
-              return await CareCharacteristicRepository.findOneBy({
-                name: characteristicName,
-              });
-            })
-          )
+        ? await prisma.careCharacteristic.findMany({
+            where: {
+              name: {
+                in: careCharacteristics,
+              },
+            },
+          })
         : [];
 
-      const service = ServiceRepository.create({
-        name,
-        description,
-        schedules: JSON.parse(JSON.stringify(schedules)),
-        advertiser,
-        value,
-        location,
-        contactPhone,
-        careCharacteristic: characteristics.filter(Boolean), // Remove características que não foram encontradas
-        createdBy: user,
+      const service = await prisma.service.create({
+        data: {
+          name,
+          description,
+          schedules: JSON.parse(JSON.stringify(schedules)),
+          advertiser,
+          value,
+          location,
+          contactPhone,
+          createdBy: {
+            connect: { id: user.id },
+          },
+          careCharacteristics: {
+            connect: characteristics.map((char) => ({ id: char.id })),
+          },
+        },
+        include: {
+          careCharacteristics: true,
+          createdBy: true,
+        },
       });
 
-      await ServiceRepository.save(service);
       res.status(201).json(service);
     } catch (error) {
       console.error(error);
@@ -71,10 +91,22 @@ export class ServiceController {
   }
 
   static async getAllServices(req: Request, res: Response) {
-    const services = await ServiceRepository.find({
-      where: { isActive: true, isDeleted: false },
-      relations: ['careCharacteristic', 'createdBy'],
-    });
-    res.status(200).json(services);
+    try {
+      const services = await prisma.service.findMany({
+        where: {
+          isActive: true,
+          isDeleted: false,
+        },
+        include: {
+          careCharacteristics: true,
+          createdBy: true,
+        },
+      });
+
+      res.status(200).json(services);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   }
 }

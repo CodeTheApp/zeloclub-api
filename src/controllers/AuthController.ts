@@ -5,8 +5,7 @@ import axios from 'axios';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Request, Response } from 'express';
-import { MoreThan } from 'typeorm';
-import { UserRepository } from '../repositories/UserRepository';
+import { prisma } from '../lib/prisma';
 import { AuthService } from '../services/AuthService';
 
 export class AuthController {
@@ -17,7 +16,7 @@ export class AuthController {
     const { email } = req.body;
 
     try {
-      const user = await UserRepository.findOne({ where: { email } });
+      const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
@@ -27,10 +26,14 @@ export class AuthController {
         crypto.randomBytes(3).toString('hex') +
         '-' +
         crypto.randomBytes(3).toString('hex');
-      user.resetPasswordToken = token;
-      user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hora
 
-      await UserRepository.save(user);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordToken: token,
+          resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
+        },
+      });
 
       // Enviar email com o token
       // await sendPasswordResetEmail(user.email, token);
@@ -49,10 +52,12 @@ export class AuthController {
     const { token, newPassword } = req.body;
 
     try {
-      const user = await UserRepository.findOne({
+      const user = await prisma.user.findFirst({
         where: {
           resetPasswordToken: token,
-          resetPasswordExpires: MoreThan(new Date()),
+          resetPasswordExpires: {
+            gt: new Date(),
+          },
         },
       });
 
@@ -62,11 +67,14 @@ export class AuthController {
       }
 
       // Atualizar a senha e limpar os campos de recuperação
-      user.password = await bcrypt.hash(newPassword, 10);
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
-
-      await UserRepository.save(user);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: await bcrypt.hash(newPassword, 10),
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        },
+      });
 
       res.status(200).json({ message: 'Password has been reset successfully' });
     } catch (error) {
@@ -145,7 +153,7 @@ export class AuthController {
 
       const auth0User = userInfo.data;
 
-      let user = await UserRepository.findOne({
+      const user = await prisma.user.findUnique({
         where: { email: auth0User.email },
       });
 
