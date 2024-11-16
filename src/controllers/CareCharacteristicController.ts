@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { CareCharacteristicRepository } from "../repositories/CareCharacteristicRepository";
+import { Request, Response } from 'express';
+import { CareCharacteristicRepository } from '../repositories/CareCharacteristicRepository';
 
 export class CareCharacteristicController {
   // Método para criar uma nova característica de cuidado
@@ -14,7 +14,7 @@ export class CareCharacteristicController {
       );
 
       if (existingCharacteristic) {
-        res.status(400).json({ message: "Characteristic already exists" });
+        res.status(400).json({ message: 'Characteristic already exists' });
         return;
       }
 
@@ -27,7 +27,7 @@ export class CareCharacteristicController {
       res.status(201).json(careCharacteristic);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -40,7 +40,7 @@ export class CareCharacteristicController {
       res.status(200).json(careCharacteristics);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -55,7 +55,7 @@ export class CareCharacteristicController {
       });
 
       if (!careCharacteristic) {
-        res.status(404).json({ message: "Characteristic not found" });
+        res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
 
@@ -67,7 +67,7 @@ export class CareCharacteristicController {
       res.status(200).json(careCharacteristic);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -81,16 +81,16 @@ export class CareCharacteristicController {
       });
 
       if (!careCharacteristic) {
-        res.status(404).json({ message: "Characteristic not found" });
+        res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
 
       careCharacteristic.isDeleted = true;
       await CareCharacteristicRepository.save(careCharacteristic);
-      res.status(200).json({ message: "Characteristic has been soft deleted" });
+      res.status(200).json({ message: 'Characteristic has been soft deleted' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 }

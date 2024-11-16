@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, Length } from "class-validator";
+import { IsEmail, IsEnum, IsOptional, Length } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
@@ -8,27 +8,27 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm";
-import { ProfessionalProfile } from "./ProfessionalProfile";
-import { Service } from "./Service";
-import { Application } from "./Application";
+} from 'typeorm';
+import { Application } from './Application';
+import { ProfessionalProfile } from './ProfessionalProfile';
+import { Service } from './Service';
 
 enum Gender {
-  FEMALE = "Female",
-  MALE = "Male",
-  OTHER = "Other",
-  NOT_INFORMED = "Not Informed",
+  FEMALE = 'Female',
+  MALE = 'Male',
+  OTHER = 'Other',
+  NOT_INFORMED = 'Not Informed',
 }
 
 export enum USER_TYPES {
-  CUSTOMER = "Customer",
-  BACKOFFICE = "Backoffice",
-  PROFESSIONAL = "Professional",
+  CUSTOMER = 'Customer',
+  BACKOFFICE = 'Backoffice',
+  PROFESSIONAL = 'Professional',
 }
 
-@Entity("users")
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ length: 100 })
@@ -50,15 +50,15 @@ export class User {
   @IsOptional()
   avatar?: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ type: 'text', nullable: true })
   @IsOptional()
   description: string;
 
-  @Column({ type: "enum", enum: Gender, default: Gender.NOT_INFORMED })
+  @Column({ type: 'enum', enum: Gender, default: Gender.NOT_INFORMED })
   @IsEnum(Gender)
   gender: Gender;
 
-  @Column({ type: "enum", enum: USER_TYPES, default: USER_TYPES.CUSTOMER })
+  @Column({ type: 'enum', enum: USER_TYPES, default: USER_TYPES.CUSTOMER })
   @IsEnum(USER_TYPES)
   userType: USER_TYPES;
 
@@ -77,10 +77,10 @@ export class User {
   })
   applications: Application[];
 
-  @Column({ type: "varchar", nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   resetPasswordToken: string | null;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpires: Date | null;
 
   @Column({ default: false })
@@ -88,9 +88,6 @@ export class User {
 
   @CreateDateColumn()
   createdAt: Date;
-
-  @Column({ default: false })
-  completeRegistration: boolean;
 
   @UpdateDateColumn()
   updatedAt: Date;

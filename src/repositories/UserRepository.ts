@@ -1,5 +1,5 @@
-import { AppDataSource } from "../config/ormconfig";
-import { User } from "../entities/User";
+import { AppDataSource } from '../config/ormconfig';
+import { User } from '../entities/User';
 
 export const UserRepository = AppDataSource.getRepository(User).extend({
   async softDeleteUser(id: string) {

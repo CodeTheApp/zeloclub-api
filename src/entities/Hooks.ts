@@ -1,15 +1,15 @@
-import { IsEmail, Length } from "class-validator";
+import { IsEmail, Length } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("users")
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ length: 100 })
@@ -24,8 +24,8 @@ export class User {
   @Length(6, 100)
   password: string;
 
-  @Column({ default: "client" })
-  role: "client" | "caregiver";
+  @Column({ default: 'client' })
+  role: 'client' | 'caregiver';
 
   @CreateDateColumn()
   createdAt: Date;

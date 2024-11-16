@@ -1,10 +1,10 @@
 // src/controllers/ApplicationController.ts
-import { Request, Response } from "express";
-import { USER_TYPES } from "../entities/User";
-import { ApplicationRepository } from "../repositories/ApplicationRepository";
-import { ServiceRepository } from "../repositories/ServiceRepository";
-import { UserRepository } from "../repositories/UserRepository";
-import { sendNotificationEmail } from "../services/emailService";
+import { Request, Response } from 'express';
+import { USER_TYPES } from '../entities/User';
+import { ApplicationRepository } from '../repositories/ApplicationRepository';
+import { ServiceRepository } from '../repositories/ServiceRepository';
+import { UserRepository } from '../repositories/UserRepository';
+import { sendNotificationEmail } from '../services/emailService';
 
 export class ApplicationController {
   static async updateApplicationStatus(req: Request, res: Response) {
@@ -12,19 +12,19 @@ export class ApplicationController {
     const { status } = req.body; // Novo status, esperado como "Accepted" ou "Rejected"
 
     // Validar se o novo status é permitido
-    const allowedStatuses = ["Accepted", "Rejected"];
+    const allowedStatuses = ['Accepted', 'Rejected'];
     if (!allowedStatuses.includes(status)) {
-      res.status(400).json({ message: "Invalid status" });
+      res.status(400).json({ message: 'Invalid status' });
       return;
     }
 
     // Buscar a aplicação pelo ID
     const application = await ApplicationRepository.findOne({
       where: { id: applicationId },
-      relations: ["service"],
+      relations: ['service'],
     });
     if (!application) {
-      res.status(404).json({ message: "Application not found" });
+      res.status(404).json({ message: 'Application not found' });
       return;
     }
 
@@ -37,7 +37,7 @@ export class ApplicationController {
 
     await sendNotificationEmail(
       // application.applicant.email,
-      "isaacsvianna@gmail.com",
+      'isaacsvianna@gmail.com',
       `Status de sua aplicação foi atualizado para: ${status}`,
       `O status de sua aplicação para o serviço ${service.name} foi atualizado para ${status}.`
     );
@@ -45,7 +45,7 @@ export class ApplicationController {
     // Responder com sucesso
     res
       .status(200)
-      .json({ message: "Application status updated successfully", status });
+      .json({ message: 'Application status updated successfully', status });
   }
 
   static async applyForService(req: Request, res: Response) {
@@ -54,11 +54,11 @@ export class ApplicationController {
 
     const service = await ServiceRepository.findOne({
       where: { id: serviceId, isActive: true, isDeleted: false },
-      relations: ["createdBy"],
-      select: ["id", "name", "createdBy", "description", "location"],
+      relations: ['createdBy'],
+      select: ['id', 'name', 'createdBy', 'description', 'location'],
     });
     if (!service) {
-      res.status(404).json({ message: "Service not found" });
+      res.status(404).json({ message: 'Service not found' });
       return;
     }
 
@@ -69,7 +69,7 @@ export class ApplicationController {
     if (!applicant) {
       res
         .status(403)
-        .json({ message: "Only professionals can apply for services" });
+        .json({ message: 'Only professionals can apply for services' });
       return;
     }
 
@@ -79,7 +79,7 @@ export class ApplicationController {
     if (existingApplication) {
       res
         .status(400)
-        .json({ message: "You have already applied for this service" });
+        .json({ message: 'You have already applied for this service' });
       return;
     }
 
@@ -93,7 +93,7 @@ export class ApplicationController {
       `O usuário ${applicant.name} solicitou seu serviço`
     );
 
-    res.status(201).json({ message: "Application submitted successfully" });
+    res.status(201).json({ message: 'Application submitted successfully' });
   }
 
   static async getApplicationsForService(req: Request, res: Response) {
@@ -101,14 +101,14 @@ export class ApplicationController {
     const service = await ServiceRepository.findOne({
       where: { id: serviceId },
       relations: [
-        "applications",
-        "applications.applicant",
-        "applications.service",
+        'applications',
+        'applications.applicant',
+        'applications.service',
       ],
     });
 
     if (!service) {
-      res.status(404).json({ message: "Service not found" });
+      res.status(404).json({ message: 'Service not found' });
       return;
     }
 
