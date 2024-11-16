@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { MoreThan } from 'typeorm';
 import { UserRepository } from '../repositories/UserRepository';
-import { AuthService } from '../services/authService';
+import { AuthService } from '../services/AuthService';
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
