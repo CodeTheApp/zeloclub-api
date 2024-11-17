@@ -14,7 +14,7 @@ const s3 = new S3Client({
 export const upload = multer({
   storage: multerS3({
     s3,
-    bucket: process.env.S3_BUCKET_NAME!,
+    bucket: process.env.AWS_BUCKET_NAME!,
     acl: 'public-read', // Define a permissão do arquivo como público para que o URL seja acessível
     contentType: multerS3.AUTO_CONTENT_TYPE, // Define o tipo de conteúdo automaticamente
     metadata: (req, file, cb) => {

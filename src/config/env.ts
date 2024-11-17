@@ -22,6 +22,7 @@ async function getParameter(name: string): Promise<string> {
 
 export async function loadEnv() {
   try {
+    // Carregar todas as variáveis em paralelo
     const [
       databaseUrl,
       jwtSecret,
@@ -30,7 +31,6 @@ export async function loadEnv() {
       awsRegion,
       awsAccessKeyId,
       awsSecretAccessKey,
-      s3BucketName,
       auth0BaseUrl,
       auth0IssuerBaseUrl,
       auth0ClientId,
@@ -45,7 +45,6 @@ export async function loadEnv() {
       getParameter('AWS_REGION'),
       getParameter('AWS_ACCESS_KEY_ID'),
       getParameter('AWS_SECRET_ACCESS_KEY'),
-      getParameter('S3_BUCKET_NAME'),
       getParameter('AUTH0_BASE_URL'),
       getParameter('AUTH0_ISSUER_BASE_URL'),
       getParameter('AUTH0_CLIENT_ID'),
@@ -54,6 +53,7 @@ export async function loadEnv() {
       getParameter('AUTH0_SECRET'),
     ]);
 
+    // Definir todas as variáveis de ambiente
     process.env.DATABASE_URL = databaseUrl;
     process.env.JWT_SECRET = jwtSecret;
     process.env.SENDGRID_API_KEY = sendgridApiKey;
@@ -61,7 +61,6 @@ export async function loadEnv() {
     process.env.AWS_REGION = awsRegion;
     process.env.AWS_ACCESS_KEY_ID = awsAccessKeyId;
     process.env.AWS_SECRET_ACCESS_KEY = awsSecretAccessKey;
-    process.env.S3_BUCKET_NAME = s3BucketName;
     process.env.AUTH0_BASE_URL = auth0BaseUrl;
     process.env.AUTH0_ISSUER_BASE_URL = auth0IssuerBaseUrl;
     process.env.AUTH0_CLIENT_ID = auth0ClientId;
@@ -72,6 +71,9 @@ export async function loadEnv() {
     console.log(
       'Environment variables loaded successfully from Parameter Store'
     );
+
+    // Log para debug (remova em produção)
+    console.log('AWS_BUCKET_NAME:', process.env.AWS_BUCKET_NAME);
   } catch (error) {
     console.error('Failed to load environment variables:', error);
     throw error;
