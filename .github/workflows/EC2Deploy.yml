@@ -18,6 +18,13 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Install dependencies
         run: npm ci
 
@@ -37,24 +44,10 @@ jobs:
         run: |
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
-      - name: Test SSH Connection
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          ssh -i ~/.ssh/deploy_key -v ubuntu@$EC2_HOST 'echo "SSH Connection Successful"'
-
       - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
-          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
         run: |
-          # Debug: mostrar diretório atual no EC2
-          ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST 'pwd'
-
-          # Tentar criar o arquivo .env com debug
-          echo "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST 'cat > /var/www/app/zeloclub-api/.env || echo "Failed to create .env file: $?"'
-
-          # Resto do deploy
           ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST '
             cd /var/www/app/zeloclub-api &&
             git pull origin main &&
@@ -64,6 +57,6 @@ jobs:
             npm run build &&
             pm2 stop all &&
             pm2 delete all &&
-            pm2 start dist/index.js --name "zeloclub-api" &&
+            NODE_ENV=production pm2 start dist/index.js --name "zeloclub-api" &&
             pm2 save
           '
