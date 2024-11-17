@@ -21,9 +21,11 @@ const authConfig = {
   issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
 };
 
-const app = express();
 const PORT = process.env.PORT ?? 3000;
-app.set('trust proxy', true);
+
+const app = express();
+const trustedProxies = ['loopback', 'linklocal', 'uniquelocal'];
+app.set('trust proxy', trustedProxies);
 
 app.use(auth(authConfig));
 app.use(express.json());
