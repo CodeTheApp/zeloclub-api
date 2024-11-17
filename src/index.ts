@@ -23,6 +23,7 @@ const authConfig = {
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
+app.set('trust proxy', true);
 
 app.use(auth(authConfig));
 app.use(express.json());

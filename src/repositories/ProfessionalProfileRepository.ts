@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 
 class ProfessionalProfileRepositoryClass {
   async findOne(options: { where: Prisma.ProfessionalProfileWhereInput }) {
-    return prisma.professionalProfile.findFirst({
+    return await prisma.professionalProfile.findFirst({
       where: options.where,
       include: {
         user: true,
@@ -12,7 +12,7 @@ class ProfessionalProfileRepositoryClass {
   }
 
   async find(options: { where: Prisma.ProfessionalProfileWhereInput }) {
-    return prisma.professionalProfile.findMany({
+    return await prisma.professionalProfile.findMany({
       where: options.where,
       include: {
         user: true,
@@ -21,7 +21,7 @@ class ProfessionalProfileRepositoryClass {
   }
 
   async create(data: Prisma.ProfessionalProfileCreateInput) {
-    return prisma.professionalProfile.create({
+    return await prisma.professionalProfile.create({
       data,
       include: {
         user: true,
@@ -32,7 +32,7 @@ class ProfessionalProfileRepositoryClass {
   async save(data: Prisma.ProfessionalProfileCreateInput & { id?: string }) {
     if (data.id) {
       const { id, ...updateData } = data;
-      return prisma.professionalProfile.update({
+      return await prisma.professionalProfile.update({
         where: { id },
         data: updateData,
         include: {
@@ -44,7 +44,7 @@ class ProfessionalProfileRepositoryClass {
   }
 
   async update(id: string, data: Prisma.ProfessionalProfileUpdateInput) {
-    return prisma.professionalProfile.update({
+    return await prisma.professionalProfile.update({
       where: { id },
       data,
       include: {
@@ -54,7 +54,7 @@ class ProfessionalProfileRepositoryClass {
   }
 
   async findByUserId(userId: string) {
-    return prisma.professionalProfile.findUnique({
+    return await prisma.professionalProfile.findUnique({
       where: { userId },
       include: {
         user: true,

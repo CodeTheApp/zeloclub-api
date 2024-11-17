@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 
 class UserRepositoryClass {
   async findOne(options: { where: Prisma.UserWhereInput }) {
-    return prisma.user.findFirst({
+    return await prisma.user.findFirst({
       where: options.where,
       include: {
         professionalProfile: true,
@@ -14,7 +14,7 @@ class UserRepositoryClass {
   }
 
   async find(options: { where: Prisma.UserWhereInput }) {
-    return prisma.user.findMany({
+    return await prisma.user.findMany({
       where: options.where,
       include: {
         professionalProfile: true,
@@ -25,7 +25,7 @@ class UserRepositoryClass {
   }
 
   async create(data: Prisma.UserCreateInput) {
-    return prisma.user.create({
+    return await prisma.user.create({
       data,
       include: {
         professionalProfile: true,
@@ -38,7 +38,7 @@ class UserRepositoryClass {
   async save(data: Prisma.UserCreateInput & { id?: string }) {
     if (data.id) {
       const { id, ...updateData } = data;
-      return prisma.user.update({
+      return await prisma.user.update({
         where: { id },
         data: updateData,
         include: {
@@ -52,7 +52,7 @@ class UserRepositoryClass {
   }
 
   async update(id: string, data: Prisma.UserUpdateInput) {
-    return prisma.user.update({
+    return await prisma.user.update({
       where: { id },
       data,
       include: {
@@ -64,7 +64,7 @@ class UserRepositoryClass {
   }
 
   async findByEmail(email: string) {
-    return prisma.user.findUnique({
+    return await prisma.user.findUnique({
       where: { email },
       include: {
         professionalProfile: true,
@@ -75,7 +75,7 @@ class UserRepositoryClass {
   }
 
   async softDelete(id: string) {
-    return prisma.user.update({
+    return await prisma.user.update({
       where: { id },
       data: {
         isDeleted: true,

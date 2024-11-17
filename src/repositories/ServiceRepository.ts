@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 
 class ServiceRepositoryClass {
   async findOne(options: { where: Prisma.ServiceWhereInput }) {
-    return prisma.service.findFirst({
+    return await prisma.service.findFirst({
       where: options.where,
       include: {
         careCharacteristics: true,
@@ -14,7 +14,7 @@ class ServiceRepositoryClass {
   }
 
   async find(options: { where: Prisma.ServiceWhereInput }) {
-    return prisma.service.findMany({
+    return await prisma.service.findMany({
       where: options.where,
       include: {
         careCharacteristics: true,
@@ -25,7 +25,7 @@ class ServiceRepositoryClass {
   }
 
   async create(data: Prisma.ServiceCreateInput) {
-    return prisma.service.create({
+    return await prisma.service.create({
       data,
       include: {
         careCharacteristics: true,
@@ -38,7 +38,7 @@ class ServiceRepositoryClass {
   async save(data: Prisma.ServiceCreateInput & { id?: string }) {
     if (data.id) {
       const { id, ...updateData } = data;
-      return prisma.service.update({
+      return await prisma.service.update({
         where: { id },
         data: updateData,
         include: {
@@ -52,7 +52,7 @@ class ServiceRepositoryClass {
   }
 
   async update(id: string, data: Prisma.ServiceUpdateInput) {
-    return prisma.service.update({
+    return await prisma.service.update({
       where: { id },
       data,
       include: {
@@ -64,7 +64,7 @@ class ServiceRepositoryClass {
   }
 
   async softDelete(id: string) {
-    return prisma.service.update({
+    return await prisma.service.update({
       where: { id },
       data: {
         isDeleted: true,

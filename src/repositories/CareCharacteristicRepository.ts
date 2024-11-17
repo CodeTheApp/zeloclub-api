@@ -3,13 +3,13 @@ import { prisma } from '../lib/prisma';
 
 class CareCharacteristicRepositoryClass {
   async findOne(options: { where: Partial<CareCharacteristic> }) {
-    return prisma.careCharacteristic.findFirst({
+    return await prisma.careCharacteristic.findFirst({
       where: options.where,
     });
   }
 
   async find(options: { where: Partial<CareCharacteristic> }) {
-    return prisma.careCharacteristic.findMany({
+    return await prisma.careCharacteristic.findMany({
       where: options.where,
     });
   }
@@ -25,18 +25,18 @@ class CareCharacteristicRepositoryClass {
   ) {
     if (data.id) {
       const { id, ...updateData } = data;
-      return prisma.careCharacteristic.update({
+      return await prisma.careCharacteristic.update({
         where: { id },
         data: updateData,
       });
     }
-    return prisma.careCharacteristic.create({
+    return await prisma.careCharacteristic.create({
       data: data as Prisma.CareCharacteristicCreateInput,
     });
   }
 
   async update(id: string, data: Prisma.CareCharacteristicUpdateInput) {
-    return prisma.careCharacteristic.update({
+    return await prisma.careCharacteristic.update({
       where: { id },
       data,
     });
@@ -44,7 +44,7 @@ class CareCharacteristicRepositoryClass {
 
   // Métodos específicos
   async softDeleteCareCharacteristic(id: string) {
-    return prisma.careCharacteristic.update({
+    return await prisma.careCharacteristic.update({
       where: { id },
       data: {
         isDeleted: true,
@@ -54,7 +54,7 @@ class CareCharacteristicRepositoryClass {
   }
 
   async findAllActiveCareCharacteristic() {
-    return prisma.careCharacteristic.findMany({
+    return await prisma.careCharacteristic.findMany({
       where: { isDeleted: false },
     });
   }

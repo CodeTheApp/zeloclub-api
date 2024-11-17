@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma';
 
 class ApplicationRepositoryClass {
   async findOne(options: { where: Prisma.ApplicationWhereInput }) {
-    return prisma.application.findFirst({
+    return await prisma.application.findFirst({
       where: options.where,
       include: {
         applicant: true,
@@ -14,7 +14,7 @@ class ApplicationRepositoryClass {
   }
 
   async find(options: { where: Prisma.ApplicationWhereInput }) {
-    return prisma.application.findMany({
+    return await prisma.application.findMany({
       where: options.where,
       include: {
         applicant: true,
@@ -24,7 +24,7 @@ class ApplicationRepositoryClass {
   }
 
   async create(data: Prisma.ApplicationCreateInput) {
-    return prisma.application.create({
+    return await prisma.application.create({
       data,
       include: {
         applicant: true,
@@ -36,7 +36,7 @@ class ApplicationRepositoryClass {
   async save(data: Prisma.ApplicationCreateInput & { id?: string }) {
     if (data.id) {
       const { id, ...updateData } = data;
-      return prisma.application.update({
+      return await prisma.application.update({
         where: { id },
         data: updateData,
         include: {
@@ -49,7 +49,7 @@ class ApplicationRepositoryClass {
   }
 
   async update(id: string, data: Prisma.ApplicationUpdateInput) {
-    return prisma.application.update({
+    return await prisma.application.update({
       where: { id },
       data,
       include: {
@@ -60,7 +60,7 @@ class ApplicationRepositoryClass {
   }
 
   async softDelete(id: string) {
-    return prisma.application.update({
+    return await prisma.application.update({
       where: { id },
       data: {
         isDeleted: true,
