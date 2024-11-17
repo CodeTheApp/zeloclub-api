@@ -18,28 +18,13 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Get DATABASE_URL from Parameter Store
-        run: |
-          echo "DATABASE_URL=$(aws ssm get-parameter --name '/zeloclub/prod/DATABASE_URL' --with-decryption --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
-
       - name: Install dependencies
         run: npm ci
 
       - name: Generate Prisma Client
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npx prisma generate
 
       - name: Build application
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm run build
 
       - name: Create SSH key
@@ -58,6 +43,22 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST '
             cd /var/www/app/zeloclub-api &&
+            echo "PORT=3000" > .env &&
+            echo "NODE_ENV=production" >> .env &&
+            echo "DATABASE_URL=\"${{ secrets.DATABASE_URL }}\"" >> .env &&
+            echo "JWT_SECRET=\"${{ secrets.JWT_SECRET }}\"" >> .env &&
+            echo "SENDGRID_API_KEY=\"${{ secrets.SENDGRID_API_KEY }}\"" >> .env &&
+            echo "AWS_BUCKET_NAME=\"${{ secrets.AWS_BUCKET_NAME }}\"" >> .env &&
+            echo "AWS_REGION=\"${{ secrets.AWS_REGION }}\"" >> .env &&
+            echo "AWS_ACCESS_KEY_ID=\"${{ secrets.AWS_ACCESS_KEY_ID }}\"" >> .env &&
+            echo "AWS_SECRET_ACCESS_KEY=\"${{ secrets.AWS_SECRET_ACCESS_KEY }}\"" >> .env &&
+            echo "S3_BUCKET_NAME=\"${{ secrets.S3_BUCKET_NAME }}\"" >> .env &&
+            echo "AUTH0_BASE_URL=\"${{ secrets.AUTH0_BASE_URL }}\"" >> .env &&
+            echo "AUTH0_ISSUER_BASE_URL=\"${{ secrets.AUTH0_ISSUER_BASE_URL }}\"" >> .env &&
+            echo "AUTH0_CLIENT_ID=\"${{ secrets.AUTH0_CLIENT_ID }}\"" >> .env &&
+            echo "AUTH0_CLIENT_SECRET=\"${{ secrets.AUTH0_CLIENT_SECRET }}\"" >> .env &&
+            echo "AUTH0_AUDIENCE=\"${{ secrets.AUTH0_AUDIENCE }}\"" >> .env &&
+            echo "AUTH0_SECRET=\"${{ secrets.AUTH0_SECRET }}\"" >> .env &&
             git pull origin main &&
             npm ci &&
             npx prisma generate &&
@@ -65,6 +66,6 @@ jobs:
             npm run build &&
             pm2 stop all &&
             pm2 delete all &&
-            NODE_ENV=production pm2 start dist/index.js --name "zeloclub-api" &&
+            pm2 start dist/index.js --name "zeloclub-api" &&
             pm2 save
           '
