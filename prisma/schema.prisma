@@ -7,41 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model applications {
-  id           String                   @id(map: "PK_938c0a27255637bde919591888f") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  applicant_id String                   @db.Uuid
-  service_id   String                   @db.Uuid
-  status       applications_status_enum @default(Pending)
-  is_deleted   Boolean                  @default(false)
-  applied_at   DateTime                 @default(now()) @db.Timestamp(6)
-  created_at   DateTime                 @default(now()) @db.Timestamp(6)
-  updated_at   DateTime                 @default(now()) @db.Timestamp(6)
-  services     services                 @relation(fields: [service_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_00956e0c71d0d2181783d7e6fb1")
-  users        users                    @relation(fields: [applicant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_194d0fca275b8661a56e486cb64")
+model Application {
+  id          String   @id
+  appliedAt   DateTime @default(now())
+  status      String   @default("Pending")
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  applicantId String
+  serviceId   String
+  User        User     @relation(fields: [applicantId], references: [id])
+  Service     Service  @relation(fields: [serviceId], references: [id])
 }
 
-model careCharacteristics {
-  id                                                String                                              @id(map: "PK_9a4d7af7d8e426c3c3a82b47a90") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                                              String                                              @unique(map: "IDX_7b9aa5ec010232156677c0e633") @db.VarChar(100)
-  description                                       String
-  createdAt                                         DateTime                                            @default(now()) @db.Timestamp(6)
-  updatedAt                                         DateTime                                            @default(now()) @db.Timestamp(6)
-  deletedAt                                         DateTime?                                           @db.Timestamp(6)
-  isDeleted                                         Boolean                                             @default(false)
-  services_care_characteristic_care_characteristics services_care_characteristic_care_characteristics[]
+model CareCharacteristic {
+  id          String    @id
+  name        String    @unique @db.VarChar(100)
+  description String
+  isDeleted   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  deletedAt   DateTime?
+  Service     Service[] @relation("ServiceToCareCharacteristic")
 }
 
-model migrations {
-  id        Int    @id(map: "PK_8c82d7f526340ab734260ea46be") @default(autoincrement())
-  timestamp BigInt
-  name      String @db.VarChar
-}
-
-model professional_profiles {
-  id             String  @id(map: "PK_b2140d2f56b0910e4c58ab4d2a2") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  location       String  @db.VarChar
-  specialty      String  @db.VarChar
-  experience     String  @db.VarChar
+model ProfessionalProfile {
+  id             String  @id
+  location       String
+  specialty      String
+  experience     String
   rating         Float   @default(0)
   price          Float
   reviews        Int     @default(0)
@@ -55,74 +49,57 @@ model professional_profiles {
   services       Json
   schedule       Json
   reviewsList    Json
-  users          users?
+  userId         String  @unique
+  User           User    @relation(fields: [userId], references: [id])
 }
 
-model services {
-  id                                                String                                              @id(map: "PK_ba2d347a3168a296416c6c5ccb2") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                                              String                                              @db.VarChar(100)
-  description                                       String
-  schedules                                         Json
-  advertiser                                        String                                              @db.VarChar(100)
-  value                                             String                                              @default("A combinar") @db.VarChar
-  location                                          Json
-  contactPhone                                      String                                              @db.VarChar(15)
-  isActive                                          Boolean                                             @default(true)
-  isDeleted                                         Boolean                                             @default(false)
-  createdAt                                         DateTime                                            @default(now()) @db.Timestamp(6)
-  updatedAt                                         DateTime                                            @default(now()) @db.Timestamp(6)
-  createdById                                       String                                              @db.Uuid
-  applications                                      applications[]
-  users                                             users                                               @relation(fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_82587938299a04adef7aa22082f")
-  services_care_characteristic_care_characteristics services_care_characteristic_care_characteristics[]
+model Service {
+  id                 String               @id
+  name               String               @db.VarChar(100)
+  description        String
+  schedules          Json
+  advertiser         String               @db.VarChar(100)
+  value              String               @default("A combinar")
+  location           Json
+  contactPhone       String               @db.VarChar(15)
+  isActive           Boolean              @default(true)
+  isDeleted          Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  createdById        String
+  Application        Application[]
+  User               User                 @relation(fields: [createdById], references: [id])
+  CareCharacteristic CareCharacteristic[] @relation("ServiceToCareCharacteristic")
 }
 
-model services_care_characteristic_care_characteristics {
-  servicesId            String              @db.Uuid
-  careCharacteristicsId String              @db.Uuid
-  services              services            @relation(fields: [servicesId], references: [id], onDelete: Cascade, map: "FK_4fbf34deaf2c067c1656dab5e6d")
-  careCharacteristics   careCharacteristics @relation(fields: [careCharacteristicsId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_60a00f3cf11fd9bfcbebb08292f")
-
-  @@unique([servicesId, careCharacteristicsId], map: "PK_102bbfce8ff9fc73cb7ed3d29be")
-  @@index([servicesId], map: "IDX_4fbf34deaf2c067c1656dab5e6")
-  @@index([careCharacteristicsId], map: "IDX_60a00f3cf11fd9bfcbebb08292")
+model User {
+  id                   String               @id
+  name                 String               @db.VarChar(100)
+  email                String               @unique
+  phoneNumber          String               @unique
+  password             String
+  avatar               String?
+  description          String?
+  gender               Gender               @default(Not_Informed)
+  userType             UserType             @default(Customer)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  isDeleted            Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  Application          Application[]
+  ProfessionalProfile  ProfessionalProfile?
+  Service              Service[]
 }
 
-model users {
-  id                    String                 @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                  String                 @db.VarChar(100)
-  email                 String                 @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar
-  phoneNumber           String                 @unique(map: "UQ_1e3d0240b49c40521aaeb953293") @db.VarChar
-  password              String                 @db.VarChar
-  avatar                String?                @db.VarChar
-  description           String?
-  gender                users_gender_enum      @default(Not_Informed)
-  userType              users_usertype_enum    @default(Customer)
-  resetPasswordToken    String?                @db.VarChar
-  resetPasswordExpires  DateTime?              @db.Timestamp(6)
-  isDeleted             Boolean                @default(false)
-  createdAt             DateTime               @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime               @default(now()) @db.Timestamp(6)
-  professionalProfileId String?                @unique(map: "REL_81a571d9a332a41eadd3a02723") @db.Uuid
-  applications          applications[]
-  services              services[]
-  professional_profiles professional_profiles? @relation(fields: [professionalProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_81a571d9a332a41eadd3a027233")
-}
-
-enum applications_status_enum {
-  Pending
-  Accepted
-  Rejected
-}
-
-enum users_gender_enum {
+enum Gender {
   Female
   Male
   Other
-  Not_Informed @map("Not Informed")
+  Not_Informed
 }
 
-enum users_usertype_enum {
+enum UserType {
   Customer
   Backoffice
   Professional
