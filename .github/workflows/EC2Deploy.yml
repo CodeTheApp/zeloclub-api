@@ -37,15 +37,24 @@ jobs:
         run: |
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
+      - name: Test SSH Connection
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -v ubuntu@$EC2_HOST 'echo "SSH Connection Successful"'
+
       - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
         run: |
-          # Envia o arquivo .env
-          echo "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST 'cat > /var/www/app/zeloclub-api/.env'
+          # Debug: mostrar diretório atual no EC2
+          ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST 'pwd'
 
-          # Executa o deploy
+          # Tentar criar o arquivo .env com debug
+          echo "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST 'cat > /var/www/app/zeloclub-api/.env || echo "Failed to create .env file: $?"'
+
+          # Resto do deploy
           ssh -i ~/.ssh/deploy_key ubuntu@$EC2_HOST '
             cd /var/www/app/zeloclub-api &&
             git pull origin main &&
