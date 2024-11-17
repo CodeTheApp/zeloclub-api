@@ -25,13 +25,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Get DATABASE_URL from Parameter Store
+        run: |
+          echo "DATABASE_URL=$(aws ssm get-parameter --name '/zeloclub/prod/DATABASE_URL' --with-decryption --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: npm ci
 
       - name: Generate Prisma Client
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npx prisma generate
 
       - name: Build application
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm run build
 
       - name: Create SSH key
