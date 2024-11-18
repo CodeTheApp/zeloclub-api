@@ -1,4 +1,3 @@
-// src/controllers/ServiceController.ts
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
@@ -117,7 +116,14 @@ export class ServiceController {
         },
         include: {
           CareCharacteristic: true,
-          User: true,
+          User: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
         },
       });
 

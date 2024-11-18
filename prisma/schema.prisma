@@ -66,6 +66,8 @@ model Service {
   isDeleted          Boolean              @default(false)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
+  acceptApplications Boolean @default(false)
+  quantityVacancies  Int                  @default(1)
   createdById        String
   Application        Application[]
   User               User                 @relation(fields: [createdById], references: [id])
