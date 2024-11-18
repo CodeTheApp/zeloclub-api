@@ -46,7 +46,7 @@ async function main() {
       updatedAt: new Date(),
     },
     {
-      id: 'a1b2c3d4-5e6f-7g8h-9i10-j11k12l13m14', // UUID fixo para ser default
+      id: 'a1b2c3d4-5e6f-7g8h-9i10-j11k12l13m14',
       name: 'Cuidados essenciais do dia a dia',
       description:
         'Conjunto de cuidados básicos essenciais incluindo supervisão geral, acompanhamento nas atividades diárias, auxílio na locomoção dentro de casa, apoio na organização do ambiente e garantia do bem-estar e segurança do idoso.',
