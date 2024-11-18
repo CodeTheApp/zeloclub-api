@@ -30,6 +30,8 @@ export class ServiceController {
 
   static async createService(req: Request, res: Response) {
     try {
+      const DEFAULT_CARE_ID = 'a1b2c3d4-5e6f-7g8h-9i10-j11k12l13m14';
+
       const {
         name,
         description,
@@ -41,6 +43,21 @@ export class ServiceController {
         careCharacteristics,
       } = req.body;
 
+      if (!name || !description || !careCharacteristics) {
+        return res.status(400).json({
+          message: 'Name, description and careCharacteristics are required',
+        });
+      }
+
+      if (
+        !Array.isArray(careCharacteristics) ||
+        careCharacteristics.length === 0
+      ) {
+        return res.status(400).json({
+          message: 'At least one care characteristic is required',
+        });
+      }
+
       const user = await prisma.user.findUnique({
         where: { id: (req as any).user.id },
       });
@@ -50,20 +67,22 @@ export class ServiceController {
         return;
       }
 
-      // Buscar características existentes
-      const characteristics = careCharacteristics
-        ? await prisma.careCharacteristic.findMany({
-            where: {
-              name: {
-                in: careCharacteristics,
-              },
-            },
-          })
-        : [];
+      const characteristics = await prisma.careCharacteristic.findMany({
+        where: {
+          name: {
+            in: careCharacteristics,
+          },
+        },
+      });
+
+      const characteristicIds = characteristics.map((char) => char.id);
+      if (!characteristicIds.includes(DEFAULT_CARE_ID)) {
+        characteristicIds.push(DEFAULT_CARE_ID);
+      }
 
       const service = await prisma.service.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           description,
           schedules: JSON.parse(JSON.stringify(schedules)),
@@ -71,15 +90,14 @@ export class ServiceController {
           value,
           location,
           contactPhone,
-          createdById: user.id 
-          ,
+          createdById: user.id,
           CareCharacteristic: {
             connect: characteristics.map((char) => ({ id: char.id })),
           },
         },
         include: {
           CareCharacteristic: true,
-           User: true,
+          User: true,
         },
       });
 
@@ -109,12 +127,11 @@ export class ServiceController {
           },
         },
       });
-  
+
       res.status(200).json(services);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
-  
 }
