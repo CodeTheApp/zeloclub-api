@@ -120,6 +120,7 @@ export class UserController {
       // Cria o usuário com o perfil profissional em uma única transação
       const user = await prisma.user.create({
         data: {
+          updatedAt: new Date,
           name,
           email,
           password: hashedPassword,
@@ -128,7 +129,7 @@ export class UserController {
           description,
           gender,
           userType: USER_TYPES.PROFESSIONAL,
-          professionalProfile: {
+          ProfessionalProfile: {
             create: {
               location,
               specialty,
@@ -150,7 +151,7 @@ export class UserController {
           },
         },
         include: {
-          professionalProfile: true,
+          ProfessionalProfile: true,
         },
       });
 
@@ -201,6 +202,7 @@ export class UserController {
 
       const user = await prisma.user.create({
         data: {
+          updatedAt: new Date,
           name,
           email,
           password: hashedPassword,
@@ -248,7 +250,7 @@ export class UserController {
 
       const user = await prisma.user.findUnique({
         where: { id },
-        include: { professionalProfile: true },
+        include: { ProfessionalProfile: true },
       });
 
       if (!user) {
@@ -260,7 +262,7 @@ export class UserController {
         where: { id },
         data: {
           userType: USER_TYPES.PROFESSIONAL,
-          professionalProfile: {
+          ProfessionalProfile: {
             upsert: {
               create: {
                 location,
@@ -302,7 +304,7 @@ export class UserController {
           },
         },
         include: {
-          professionalProfile: true,
+          ProfessionalProfile: true,
         },
       });
 
@@ -323,7 +325,7 @@ export class UserController {
       const { id } = req.params;
       const user = await prisma.user.findUnique({
         where: { id },
-        include: { professionalProfile: true },
+        include: { ProfessionalProfile: true },
       });
 
       if (!user) {
@@ -344,7 +346,7 @@ export class UserController {
     try {
       const users = await prisma.user.findMany({
         where: { isDeleted: false },
-        include: { professionalProfile: true },
+        include: { ProfessionalProfile: true },
       });
 
       res.status(200).json({ users });

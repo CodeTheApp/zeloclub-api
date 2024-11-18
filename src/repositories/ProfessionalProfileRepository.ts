@@ -6,7 +6,7 @@ class ProfessionalProfileRepositoryClass {
     return await prisma.professionalProfile.findFirst({
       where: options.where,
       include: {
-        user: true,
+        User: true,
       },
     });
   }
@@ -15,7 +15,7 @@ class ProfessionalProfileRepositoryClass {
     return await prisma.professionalProfile.findMany({
       where: options.where,
       include: {
-        user: true,
+        User: true,
       },
     });
   }
@@ -24,7 +24,7 @@ class ProfessionalProfileRepositoryClass {
     return await prisma.professionalProfile.create({
       data,
       include: {
-        user: true,
+        User: true,
       },
     });
   }
@@ -36,7 +36,7 @@ class ProfessionalProfileRepositoryClass {
         where: { id },
         data: updateData,
         include: {
-          user: true,
+          User: true,
         },
       });
     }
@@ -48,7 +48,7 @@ class ProfessionalProfileRepositoryClass {
       where: { id },
       data,
       include: {
-        user: true,
+        User: true,
       },
     });
   }
@@ -57,7 +57,7 @@ class ProfessionalProfileRepositoryClass {
     return await prisma.professionalProfile.findUnique({
       where: { userId },
       include: {
-        user: true,
+        User: true,
       },
     });
   }

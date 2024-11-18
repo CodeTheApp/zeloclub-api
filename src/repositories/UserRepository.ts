@@ -6,9 +6,9 @@ class UserRepositoryClass {
     return await prisma.user.findFirst({
       where: options.where,
       include: {
-        professionalProfile: true,
-        services: true,
-        applications: true,
+        ProfessionalProfile: true,
+        Service: true,
+        Application: true,
       },
     });
   }
@@ -16,10 +16,10 @@ class UserRepositoryClass {
   async find(options: { where: Prisma.UserWhereInput }) {
     return await prisma.user.findMany({
       where: options.where,
-      include: {
-        professionalProfile: true,
-        services: true,
-        applications: true,
+     include: {
+        ProfessionalProfile: true,
+        Service: true,
+        Application: true,
       },
     });
   }
@@ -27,10 +27,10 @@ class UserRepositoryClass {
   async create(data: Prisma.UserCreateInput) {
     return await prisma.user.create({
       data,
-      include: {
-        professionalProfile: true,
-        services: true,
-        applications: true,
+     include: {
+        ProfessionalProfile: true,
+        Service: true,
+        Application: true,
       },
     });
   }
@@ -42,9 +42,9 @@ class UserRepositoryClass {
         where: { id },
         data: updateData,
         include: {
-          professionalProfile: true,
-          services: true,
-          applications: true,
+          ProfessionalProfile: true,
+          Service: true,
+          Application: true,
         },
       });
     }
@@ -55,10 +55,10 @@ class UserRepositoryClass {
     return await prisma.user.update({
       where: { id },
       data,
-      include: {
-        professionalProfile: true,
-        services: true,
-        applications: true,
+     include: {
+        ProfessionalProfile: true,
+        Service: true,
+        Application: true,
       },
     });
   }
@@ -66,10 +66,10 @@ class UserRepositoryClass {
   async findByEmail(email: string) {
     return await prisma.user.findUnique({
       where: { email },
-      include: {
-        professionalProfile: true,
-        services: true,
-        applications: true,
+     include: {
+        ProfessionalProfile: true,
+        Service: true,
+        Application: true,
       },
     });
   }
