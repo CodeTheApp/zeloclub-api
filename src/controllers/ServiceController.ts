@@ -63,6 +63,7 @@ export class ServiceController {
 
       const service = await prisma.service.create({
         data: {
+          updatedAt: new Date,
           name,
           description,
           schedules: JSON.parse(JSON.stringify(schedules)),
@@ -70,16 +71,15 @@ export class ServiceController {
           value,
           location,
           contactPhone,
-          createdBy: {
-            connect: { id: user.id },
-          },
-          careCharacteristics: {
+          createdById: user.id 
+          ,
+          CareCharacteristic: {
             connect: characteristics.map((char) => ({ id: char.id })),
           },
         },
         include: {
-          careCharacteristics: true,
-          createdBy: true,
+          CareCharacteristic: true,
+          // createdBy: true,
         },
       });
 
@@ -98,8 +98,8 @@ export class ServiceController {
           isDeleted: false,
         },
         include: {
-          careCharacteristics: true,
-          createdBy: true,
+          CareCharacteristic: true,
+          // createdBy: true,
         },
       });
 

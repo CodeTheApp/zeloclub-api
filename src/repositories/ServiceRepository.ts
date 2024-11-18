@@ -6,9 +6,9 @@ class ServiceRepositoryClass {
     return await prisma.service.findFirst({
       where: options.where,
       include: {
-        careCharacteristics: true,
-        createdBy: true,
-        applications: true,
+        CareCharacteristic: true,
+        // createdBy: true,
+        Application: true,
       },
     });
   }
@@ -17,9 +17,9 @@ class ServiceRepositoryClass {
     return await prisma.service.findMany({
       where: options.where,
       include: {
-        careCharacteristics: true,
-        createdBy: true,
-        applications: true,
+        CareCharacteristic: true,
+        // createdBy: true,
+        Application: true,
       },
     });
   }
@@ -28,9 +28,9 @@ class ServiceRepositoryClass {
     return await prisma.service.create({
       data,
       include: {
-        careCharacteristics: true,
-        createdBy: true,
-        applications: true,
+        CareCharacteristic: true,
+        // createdBy: true,
+        Application: true,
       },
     });
   }
@@ -42,9 +42,9 @@ class ServiceRepositoryClass {
         where: { id },
         data: updateData,
         include: {
-          careCharacteristics: true,
-          createdBy: true,
-          applications: true,
+          CareCharacteristic: true,
+          // createdBy: true,
+          Application: true,
         },
       });
     }
@@ -56,9 +56,9 @@ class ServiceRepositoryClass {
       where: { id },
       data,
       include: {
-        careCharacteristics: true,
-        createdBy: true,
-        applications: true,
+        CareCharacteristic: true,
+        // createdBy: true,
+        Application: true,
       },
     });
   }

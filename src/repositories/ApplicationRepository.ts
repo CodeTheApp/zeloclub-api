@@ -7,8 +7,8 @@ class ApplicationRepositoryClass {
     return await prisma.application.findFirst({
       where: options.where,
       include: {
-        applicant: true,
-        service: true,
+        // applicant: true,
+        Service: true,
       },
     });
   }
@@ -17,8 +17,8 @@ class ApplicationRepositoryClass {
     return await prisma.application.findMany({
       where: options.where,
       include: {
-        applicant: true,
-        service: true,
+        // applicant: true,
+        Service: true,
       },
     });
   }
@@ -27,8 +27,8 @@ class ApplicationRepositoryClass {
     return await prisma.application.create({
       data,
       include: {
-        applicant: true,
-        service: true,
+        // applicant: true,
+        Service: true,
       },
     });
   }
@@ -40,8 +40,8 @@ class ApplicationRepositoryClass {
         where: { id },
         data: updateData,
         include: {
-          applicant: true,
-          service: true,
+          // applicant: true,
+          Service: true,
         },
       });
     }
@@ -53,8 +53,8 @@ class ApplicationRepositoryClass {
       where: { id },
       data,
       include: {
-        applicant: true,
-        service: true,
+        // applicant: true,
+        Service: true,
       },
     });
   }

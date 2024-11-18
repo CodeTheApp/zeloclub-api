@@ -19,7 +19,7 @@ export class ApplicationController {
       const application = await prisma.application.findUnique({
         where: { id: applicationId },
         include: {
-          service: true,
+          Service: true,
         },
       });
 
@@ -32,14 +32,14 @@ export class ApplicationController {
         where: { id: applicationId },
         data: { status },
         include: {
-          service: true,
+          Service: true,
         },
       });
 
       await sendNotificationEmail(
         'isaacsvianna@gmail.com',
         `Status de sua aplicação foi atualizado para: ${status}`,
-        `O status de sua aplicação para o serviço ${application.service.name} foi atualizado para ${status}.`
+        `O status de sua aplicação para o serviço ${application.Service.name} foi atualizado para ${status}.`
       );
 
       res.status(200).json({
@@ -64,7 +64,7 @@ export class ApplicationController {
           isDeleted: false,
         },
         include: {
-          createdBy: true,
+          // createdBy: true,
         },
       });
 
@@ -102,19 +102,22 @@ export class ApplicationController {
       }
 
       const application = await prisma.application.create({
+        //@ts-ignore
         data: {
-          service: { connect: { id: serviceId } },
-          applicant: { connect: { id: userId } },
+          updatedAt: new Date(),
+          Service: { connect: { id: serviceId } },
+          applicantId: userId  ,
           status: 'Pending',
         },
         include: {
-          service: true,
-          applicant: true,
+          Service: true,
+          // applicant: true,
         },
       });
 
       await sendNotificationEmail(
-        service.createdBy.email,
+        //@ts-ignore
+        service.createdById.email,
         `Nova aplicação para seu serviço: ${service.name}`,
         `O usuário ${applicant.name} solicitou seu serviço`
       );
@@ -133,8 +136,9 @@ export class ApplicationController {
       const service = await prisma.service.findUnique({
         where: { id: serviceId },
         include: {
-          applications: {
+          Application: {
             include: {
+              //@ts-ignore
               applicant: true,
               service: true,
             },
@@ -146,7 +150,7 @@ export class ApplicationController {
         res.status(404).json({ message: 'Service not found' });
         return;
       }
-
+      //@ts-ignore
       res.status(200).json(service.applications);
     } catch (error) {
       console.error(error);

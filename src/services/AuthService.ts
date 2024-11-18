@@ -34,6 +34,7 @@ export class AuthService {
     // Cria usuário com ou sem perfil profissional em uma única transação
     const user = await prisma.user.create({
       data: {
+        updatedAt: new Date,
         name,
         email,
         password: hashedPassword,
@@ -68,7 +69,7 @@ export class AuthService {
         }),
       },
       include: {
-        professionalProfile: true,
+        ProfessionalProfile: true,
       },
     });
 
@@ -107,7 +108,7 @@ export class AuthService {
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
         include: {
-          professionalProfile: true,
+          ProfessionalProfile: true,
         },
       });
 

@@ -18,6 +18,7 @@ export class CareCharacteristicController {
       }
 
       const careCharacteristic = CareCharacteristicRepository.create({
+        updatedAt: new Date,
         name,
         description,
       });
