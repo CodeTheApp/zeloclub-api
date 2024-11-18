@@ -106,7 +106,6 @@ export class ApplicationController {
           User: { connect: { id: userId } },
           updatedAt: new Date(),
           Service: { connect: { id: serviceId } },
-          applicantId: userId,
           status: "Pending",
         },
         include: {
@@ -135,6 +134,9 @@ export class ApplicationController {
       const service = await prisma.service.findUnique({
         where: { id: serviceId },
         select: {
+          id: true,
+          name: true,
+          advertiser: true,
           Application: {
             select: {
               id: true,
@@ -149,13 +151,6 @@ export class ApplicationController {
                   name: true,
                   email: true,
                   avatar: true,
-                },
-              },
-              Service: {
-                select: {
-                  id: true,
-                  name: true,
-                  advertiser: true,
                 },
               },
             },

@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthService } from '../services/AuthService';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -35,8 +36,8 @@ export class AuthController {
         },
       });
 
-      // Enviar email com o token
-      // await sendPasswordResetEmail(user.email, token);
+     
+      await sendPasswordResetEmail(user.email, token);
 
       res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
