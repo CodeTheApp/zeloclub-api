@@ -79,7 +79,7 @@ export class ServiceController {
         },
         include: {
           CareCharacteristic: true,
-          // createdBy: true,
+           User: true,
         },
       });
 
@@ -99,7 +99,7 @@ export class ServiceController {
         },
         include: {
           CareCharacteristic: true,
-          // createdBy: true,
+         User: true,
         },
       });
 

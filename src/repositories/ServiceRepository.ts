@@ -7,7 +7,7 @@ class ServiceRepositoryClass {
       where: options.where,
       include: {
         CareCharacteristic: true,
-        // createdBy: true,
+        User:true,
         Application: true,
       },
     });
@@ -18,7 +18,7 @@ class ServiceRepositoryClass {
       where: options.where,
       include: {
         CareCharacteristic: true,
-        // createdBy: true,
+        User:true,
         Application: true,
       },
     });
@@ -29,7 +29,7 @@ class ServiceRepositoryClass {
       data,
       include: {
         CareCharacteristic: true,
-        // createdBy: true,
+        User:true,
         Application: true,
       },
     });
@@ -43,7 +43,7 @@ class ServiceRepositoryClass {
         data: updateData,
         include: {
           CareCharacteristic: true,
-          // createdBy: true,
+          User:true,
           Application: true,
         },
       });
@@ -57,7 +57,7 @@ class ServiceRepositoryClass {
       data,
       include: {
         CareCharacteristic: true,
-        // createdBy: true,
+        User:true,
         Application: true,
       },
     });

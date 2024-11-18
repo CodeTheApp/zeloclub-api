@@ -64,7 +64,7 @@ export class ApplicationController {
           isDeleted: false,
         },
         include: {
-          // createdBy: true,
+           User: true,
         },
       });
 
@@ -104,6 +104,7 @@ export class ApplicationController {
       const application = await prisma.application.create({
         //@ts-ignore
         data: {
+          
           updatedAt: new Date(),
           Service: { connect: { id: serviceId } },
           applicantId: userId  ,
@@ -111,13 +112,13 @@ export class ApplicationController {
         },
         include: {
           Service: true,
-          // applicant: true,
+          User: true,
         },
       });
 
       await sendNotificationEmail(
-        //@ts-ignore
-        service.createdById.email,
+      
+        service.User.email,
         `Nova aplicação para seu serviço: ${service.name}`,
         `O usuário ${applicant.name} solicitou seu serviço`
       );
@@ -138,9 +139,9 @@ export class ApplicationController {
         include: {
           Application: {
             include: {
-              //@ts-ignore
-              applicant: true,
-              service: true,
+            
+              User: true,
+              Service: true,
             },
           },
         },
@@ -150,8 +151,8 @@ export class ApplicationController {
         res.status(404).json({ message: 'Service not found' });
         return;
       }
-      //@ts-ignore
-      res.status(200).json(service.applications);
+      
+      res.status(200).json(service.Application);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
