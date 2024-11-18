@@ -41,6 +41,21 @@ export class ServiceController {
         careCharacteristics,
       } = req.body;
 
+      if (!name || !description || !careCharacteristics) {
+        return res.status(400).json({
+          message: 'Name, description and careCharacteristics are required',
+        });
+      }
+
+      if (
+        !Array.isArray(careCharacteristics) ||
+        careCharacteristics.length === 0
+      ) {
+        return res.status(400).json({
+          message: 'At least one care characteristic is required',
+        });
+      }
+
       const user = await prisma.user.findUnique({
         where: { id: (req as any).user.id },
       });
@@ -50,20 +65,24 @@ export class ServiceController {
         return;
       }
 
-      // Buscar características existentes
-      const characteristics = careCharacteristics
-        ? await prisma.careCharacteristic.findMany({
-            where: {
-              name: {
-                in: careCharacteristics,
-              },
-            },
-          })
-        : [];
+      const characteristics = await prisma.careCharacteristic.findMany({
+        where: {
+          name: {
+            in: careCharacteristics,
+          },
+        },
+      });
+
+      // Validar se todas as características solicitadas foram encontradas
+      if (characteristics.length !== careCharacteristics.length) {
+        return res.status(400).json({
+          message: 'One or more care characteristics are invalid',
+        });
+      }
 
       const service = await prisma.service.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           description,
           schedules: JSON.parse(JSON.stringify(schedules)),
@@ -71,15 +90,14 @@ export class ServiceController {
           value,
           location,
           contactPhone,
-          createdById: user.id 
-          ,
+          createdById: user.id,
           CareCharacteristic: {
             connect: characteristics.map((char) => ({ id: char.id })),
           },
         },
         include: {
           CareCharacteristic: true,
-           User: true,
+          User: true,
         },
       });
 
@@ -99,7 +117,7 @@ export class ServiceController {
         },
         include: {
           CareCharacteristic: true,
-         User: true,
+          User: true,
         },
       });
 
