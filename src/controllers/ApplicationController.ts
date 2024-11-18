@@ -1,4 +1,3 @@
-// src/controllers/ApplicationController.ts
 import { Request, Response } from 'express';
 import { USER_TYPES } from '../entities/User';
 import { prisma } from '../lib/prisma';
@@ -13,7 +12,8 @@ export class ApplicationController {
 
     const allowedStatuses = ['Accepted', 'Rejected'];
     if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+      res.status(400).json({ message: 'Invalid status' });
+      return;
     }
 
     try {
@@ -25,13 +25,15 @@ export class ApplicationController {
               id: true,
               name: true,
               createdById: true,
+              advertiser: true,
             },
           },
         },
       });
 
       if (!application) {
-        return res.status(404).json({ message: 'Application not found' });
+        res.status(404).json({ message: 'Application not found' });
+        return;
       }
 
       // Verifica se o usuário é o criador do serviço ou backoffice
@@ -39,9 +41,10 @@ export class ApplicationController {
         application.Service.createdById !== requestUserId &&
         requestUserType !== 'BACKOFFICE'
       ) {
-        return res
+        res
           .status(403)
           .json({ message: 'Not authorized to update this application' });
+        return;
       }
 
       if (status === 'Accepted') {
@@ -95,15 +98,10 @@ export class ApplicationController {
         });
       }
 
-      const crossStatus: { [key: string]: string } = {
-        Accepted: 'Rejeitada',
-        Rejected: 'Aceita',
-      };
-
       await sendNotificationEmail(
         'isaacsvianna@gmail.com',
-        `Zeloclub: Status de sua aplicação foi atualizado para: ${status}`,
-        `O status de sua aplicação para o serviço "${application.Service.name}" foi atualizado para ${crossStatus[status]}.`
+        status,
+        application.Service.name
       );
 
       return res.status(200).json({
@@ -234,6 +232,11 @@ export class ApplicationController {
           },
         },
       });
+
+      if (!service) {
+        res.status(404).json({ message: 'Service not found' });
+        return;
+      }
 
       res.status(200).json(service);
     } catch (error) {

@@ -1,4 +1,3 @@
-// src/controllers/ServiceController.ts
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 

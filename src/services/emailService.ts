@@ -43,19 +43,26 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 
 export const sendNotificationEmail = async (
   email: string,
-  subject: string,
-  content: string
+  status: string,
+  serviceName: string
 ) => {
   const mailerSend = createMailerInstance();
 
   const recipients = [new Recipient(email)];
+
+  const crossStatus: { [key: string]: string } = {
+    Accepted: 'Rejeitado',
+    Rejected: 'Aceito',
+  };
+
   const personalization = [
     {
       email,
       data: {
         account_name: 'Zeloclub',
         support_email: 'contato@zeloclub.com.br',
-        content,
+        status: crossStatus[status],
+        serviceName,
       },
     },
   ];
@@ -64,8 +71,10 @@ export const sendNotificationEmail = async (
     .setFrom(defaultSender)
     .setTo(recipients)
     .setReplyTo(defaultSender)
-    .setSubject(subject)
-    .setTemplateId('vywj2lp61zj47oqz')
+    .setSubject(
+      `O Status de sua aplicação foi atualizado para: ${crossStatus[status]}`
+    )
+    .setTemplateId('0r83ql3ky8m4zw1j')
     .setPersonalization(personalization);
 
   try {
