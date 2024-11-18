@@ -30,6 +30,8 @@ export class ServiceController {
 
   static async createService(req: Request, res: Response) {
     try {
+      const DEFAULT_CARE_ID = 'a1b2c3d4-5e6f-7g8h-9i10-j11k12l13m14';
+
       const {
         name,
         description,
@@ -73,11 +75,9 @@ export class ServiceController {
         },
       });
 
-      // Validar se todas as características solicitadas foram encontradas
-      if (characteristics.length !== careCharacteristics.length) {
-        return res.status(400).json({
-          message: 'One or more care characteristics are invalid',
-        });
+      const characteristicIds = characteristics.map((char) => char.id);
+      if (!characteristicIds.includes(DEFAULT_CARE_ID)) {
+        characteristicIds.push(DEFAULT_CARE_ID);
       }
 
       const service = await prisma.service.create({
