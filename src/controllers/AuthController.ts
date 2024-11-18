@@ -94,7 +94,7 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-
+      
       const user = await AuthService.register(
         name,
         email,

@@ -46,7 +46,7 @@ export class AuthService {
         resetPasswordExpires: null,
         // Se for profissional, cria o perfil automaticamente
         ...(userType === USER_TYPES.PROFESSIONAL && {
-          professionalProfile: {
+          ProfessionalProfile: {
             create: {
               location: '',
               specialty: '',
