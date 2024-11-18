@@ -129,8 +129,11 @@ export class AuthController {
 
   public static readonly me = async (req: Request, res: Response) => {
     try {
-      const { token } = req.body;
-
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Token is missing or invalid' });
+      }
+      const token = authHeader.split(' ')[1];
       const user = await AuthService.getUserFromToken(token);
       res.status(200).json({ user });
     } catch (error) {
@@ -140,6 +143,8 @@ export class AuthController {
       });
     }
   };
+  
+  
 
   public static readonly auth0Login = async (req: Request, res: Response) => {
     try {

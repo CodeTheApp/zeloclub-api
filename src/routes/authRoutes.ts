@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { AuthController } from '../controllers/AuthController';
+import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -40,6 +41,13 @@ router.post(
   AuthController.resetPassword
 );
 router.post('/auth0-login', loginLimiter, AuthController.auth0Login);
-router.post('/me', AuthController.me);
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    await AuthController.me(req, res);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 export default router;
