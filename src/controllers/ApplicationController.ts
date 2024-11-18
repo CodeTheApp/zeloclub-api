@@ -129,7 +129,7 @@ export class ApplicationController {
 
   static async getApplicationsForService(req: Request, res: Response) {
     const { serviceId } = req.params;
-  
+
     try {
       const service = await prisma.service.findUnique({
         where: { id: serviceId },
@@ -157,16 +157,54 @@ export class ApplicationController {
           },
         },
       });
-  
-      if (!service) {
-        return res.status(404).json({ message: "Service not found" });
-      }
-      return res.status(200).json(service);
+
+      res.status(200).json(service);
     } catch (error) {
       console.error("Error fetching applications for service:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error" });
     }
   }
-  
-  
+
+
+  static async acceptApplication(req: Request, res: Response) {
+    const { applicationId } = req.body; 
+    const userId = (req as any).user.id; 
+
+    try {
+        
+        const application = await prisma.application.findUnique({
+            where: { id: applicationId },
+            include: { Service: true }, 
+        });
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        
+        if (application.Service.createdById !== userId) {
+            return res.status(403).json({ message: "You are not authorized to accept this application" });
+        }
+        await prisma.application.updateMany({
+            where: {
+                serviceId: application.serviceId,
+                id: { not: applicationId },
+            },
+            data: { status: "Rejected" },
+        });
+        await prisma.application.update({
+            where: { id: applicationId },
+            data: { status: "Accepted" },
+        });
+        await prisma.service.update({
+            where: { id: application.serviceId },
+            data: { acceptApplications: false },
+        });
+        res.status(200).json({ message: "Application accepted, other applications rejected, and no further applications allowed for this service." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 }

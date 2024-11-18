@@ -99,14 +99,22 @@ export class ServiceController {
         },
         include: {
           CareCharacteristic: true,
-         User: true,
+          User: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
         },
       });
-
+  
       res.status(200).json(services);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+  
 }
