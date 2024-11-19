@@ -5,6 +5,7 @@ import axios from 'axios';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Request, Response } from 'express';
+import { logger } from '../lib/logger/winston';
 import { prisma } from '../lib/prisma';
 import { AuthService } from '../services/AuthService';
 import { sendPasswordResetEmail } from '../services/emailService';
@@ -18,6 +19,8 @@ export class AuthController {
 
     try {
       const user = await prisma.user.findUnique({ where: { email } });
+      logger.info('Request password reset', { email });
+
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
@@ -36,12 +39,12 @@ export class AuthController {
         },
       });
 
-     
       await sendPasswordResetEmail(user.email, token);
 
       res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
       console.error(error);
+      logger.error('Error requesting password reset', { error });
       res.status(500).json({ message: 'Internal server error' });
     }
   };
@@ -95,7 +98,7 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-      
+
       const user = await AuthService.register(
         name,
         email,
@@ -106,9 +109,12 @@ export class AuthController {
         gender
       );
 
+      logger.info('User registered', { email: email });
+
       res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
       console.error(error);
+      logger.error('Error registering user', { error });
       res.status(400).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -118,10 +124,13 @@ export class AuthController {
   public static readonly login = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
+      logger.info('Login user', { email: email });
+
       const token = await AuthService.login(email, password);
       res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
       console.error(error);
+      logger.error('Error login', { error });
       res.status(400).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -144,8 +153,6 @@ export class AuthController {
       });
     }
   };
-  
-  
 
   public static readonly auth0Login = async (req: Request, res: Response) => {
     try {
