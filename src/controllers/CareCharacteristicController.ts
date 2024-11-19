@@ -8,6 +8,10 @@ export class CareCharacteristicController {
     const { name, description } = req.body;
 
     try {
+      if (!description) {
+         res.status(400).json({ message: "Description is required" });
+         return;
+      }
       const existingCharacteristic = await CareCharacteristicRepository.findOne(
         {
           where: { name },
