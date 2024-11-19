@@ -5,6 +5,14 @@ import { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { USER_TYPES } from '../../types';
 
+
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    userType: string;
+  };
+}
 export const authenticate: RequestHandler = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -18,7 +26,7 @@ export const authenticate: RequestHandler = (req, res, next) => {
       id: string;
       userType: string;
     };
-    (req as any).user = decoded;
+    (req as AuthenticatedRequest).user = decoded;
     next();
   } catch (error) {
     console.error(error);

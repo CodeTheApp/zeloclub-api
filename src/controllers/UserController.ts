@@ -6,6 +6,9 @@ import { prisma } from '../lib/prisma';
 import { sendPasswordResetEmail } from '../services/emailService';
 import { faker } from '@faker-js/faker';
 import { isUUID } from 'validator';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+
+
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (req, res) => {
@@ -384,13 +387,47 @@ export class UserController {
     }
   };
 
-  public static readonly getAllUsers: RequestHandler = async (req, res) => {
+  //GET /users?page=1&pageSize=5&sortBy=name&sortOrder=desc&userType=Admin&gender=Male
+  public static readonly getAllUsers: RequestHandler = async (req:AuthenticatedRequest, res) => {
     try {
+      const { page = 1, pageSize = 10, sortBy = 'createdAt', sortOrder = 'asc', ...filters } = req.query;
+  
+      const pageNumber = Number(page);
+      const pageSizeNumber = Number(pageSize);
+      const skip = (pageNumber - 1) * pageSizeNumber;
+      const requestUser = req.user; 
+      const isBackofficeUser = requestUser?.userType === USER_TYPES.BACKOFFICE
+      const whereConditions: any = {
+        ...filters, 
+      }
+      if (!isBackofficeUser) {
+        whereConditions.isDeleted = false;
+        
+      }
+      const orderBy: Record<string, 'asc' | 'desc'> = {};
+      if (typeof sortBy === 'string') {
+        orderBy[sortBy] = sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc';
+      }
+  
       const users = await prisma.user.findMany({
-        where: { isDeleted: false },
-        include: { ProfessionalProfile: true },
+        where: whereConditions,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          isDeleted: true,
+          gender: true,
+          ProfessionalProfile: true,
+        },
+        skip,
+        take: pageSizeNumber,
+        orderBy,
       });
-
+  
       res.status(200).json({ users });
     } catch (error) {
       console.error(error);
@@ -399,6 +436,7 @@ export class UserController {
       });
     }
   };
+  
 
   //GET /backoffice-users?name=Jane&email=@example.com&gender=Female&page=1&limit=10
   public static readonly getAllBackofficeUsers: RequestHandler = async (
