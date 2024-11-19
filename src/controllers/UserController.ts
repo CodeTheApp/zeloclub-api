@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import { RequestHandler } from 'express';
 import { USER_TYPES } from '../../types';
 import { prisma } from '../lib/prisma';
+import { sendPasswordResetEmail } from '../services/emailService';
+import { faker } from '@faker-js/faker';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (req, res) => {
@@ -175,34 +177,36 @@ export class UserController {
       const {
         name,
         email,
-        password,
         phoneNumber,
         avatar,
         description,
         gender,
       } = req.body;
-
+  
       const existingUser = await prisma.user.findFirst({
         where: {
           OR: [{ email }, { phoneNumber }],
         },
       });
-
+  
       if (existingUser?.email === email) {
         res.status(400).json({ message: 'Email already in use' });
         return;
       }
-
+  
       if (existingUser?.phoneNumber === phoneNumber) {
         res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-
+  
+   
+      const temporaryPassword = faker.internet.password({ length: 6, memorable: true, pattern: /[A-NP-Z1-9]/}) // '1-9 a-z retirando "O" e "0" pq sao parecidos'
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+  
+    
       const user = await prisma.user.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           email,
           password: hashedPassword,
@@ -213,10 +217,30 @@ export class UserController {
           userType: USER_TYPES.BACKOFFICE,
         },
       });
-
+  
+      
+      const token =
+        faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
+  
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordToken: token,
+          resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
+        },
+      });
+  
+      await sendPasswordResetEmail(email, token);
+      console.log(token)
+  
       res.status(201).json({
-        message: 'Backoffice user created successfully',
-        user,
+        message: 'Backoffice user created successfully. A password reset email has been sent.',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+        },
       });
     } catch (error) {
       console.error(error);
@@ -225,6 +249,7 @@ export class UserController {
       });
     }
   };
+  
 
   public static readonly completeProfile: RequestHandler = async (req, res) => {
     try {
@@ -358,19 +383,63 @@ export class UserController {
     }
   };
 
+  //GET /backoffice-users?name=Jane&email=@example.com&gender=Female&page=1&limit=10
   public static readonly getAllBackofficeUsers: RequestHandler = async (
     req,
     res
   ) => {
     try {
+      const {
+        name,
+        email,
+        gender,
+        page = 1,
+        limit = 10,
+      } = req.query;
+  
+      const filters: any = {
+        userType: USER_TYPES.BACKOFFICE,
+        isDeleted: false,
+      };
+      if (name) {
+        filters.name = { contains: name, mode: 'insensitive' };
+      }
+  
+      if (email) {
+        filters.email = { contains: email, mode: 'insensitive' };
+      }
+  
+      if (gender) {
+        filters.gender = gender;
+      }
+      const skip = (Number(page) - 1) * Number(limit);
       const users = await prisma.user.findMany({
-        where: {
-          userType: USER_TYPES.BACKOFFICE,
-          isDeleted: false,
+        where: filters,
+        skip: skip,
+        take: Number(limit),
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          gender: true,
+          ProfessionalProfile: true,
+          Service: true,
+          Application: true,
         },
       });
-
-      res.status(200).json({ users });
+      const totalUsers = await prisma.user.count({ where: filters });
+      res.status(200).json({
+        users,
+        pagination: {
+          total: totalUsers,
+          currentPage: Number(page),
+          totalPages: Math.ceil(totalUsers / Number(limit)),
+        },
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({
@@ -378,4 +447,5 @@ export class UserController {
       });
     }
   };
+  
 }
