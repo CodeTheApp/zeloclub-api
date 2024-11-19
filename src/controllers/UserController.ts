@@ -5,6 +5,7 @@ import { USER_TYPES } from '../../types';
 import { prisma } from '../lib/prisma';
 import { sendPasswordResetEmail } from '../services/emailService';
 import { faker } from '@faker-js/faker';
+import { isUUID } from 'validator';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (req, res) => {
@@ -348,14 +349,30 @@ export class UserController {
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
       const { id } = req.params;
+
+      if (!isUUID(id)) {
+         res.status(400).json({ message: 'Invalid UUID format' });
+         return
+      }
+
       const user = await prisma.user.findUnique({
-        where: { id },
-        include: { ProfessionalProfile: true },
+        where: { id,isDeleted:false },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          gender: true,
+          ProfessionalProfile: true,
+        },
       });
 
       if (!user) {
-        res.status(404).json({ message: 'User not found' });
-        return;
+         res.status(404).json({ message: 'User not found' });
+         return
       }
 
       res.status(200).json({ user });
