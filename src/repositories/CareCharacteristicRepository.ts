@@ -8,11 +8,26 @@ class CareCharacteristicRepositoryClass {
     });
   }
 
-  async find(options: { where: Partial<CareCharacteristic> }) {
+  async find(options: { where: Partial<CareCharacteristic>, orderBy?: 'asc' | 'desc' }) {
+    const { where, orderBy = 'asc' } = options;
+  
     return await prisma.careCharacteristic.findMany({
-      where: options.where,
+      where: {
+        ...where,
+        isDeleted: false, 
+      },
+      orderBy: {
+        name: orderBy, 
+      },
+      include: {
+        Service: {
+          where: { isActive: true, isDeleted: false }, 
+          select: { id: true }, 
+        },
+      },
     });
   }
+  
 
   create(data: Prisma.CareCharacteristicCreateInput) {
     return data;

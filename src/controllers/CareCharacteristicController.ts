@@ -35,17 +35,33 @@ export class CareCharacteristicController {
     }
   }
 
+  //GET /care-characteristics?name=teste&description=teste&orderByName=desc
   static async getAllCareCharacteristics(req: Request, res: Response) {
+    const { name, description, orderByName } = req.query;
     try {
+      const whereConditions: any = {};
+      if (name) {
+        whereConditions.name = { contains: name, mode: 'insensitive' };  
+      }
+      if (description) {
+        whereConditions.description = { contains: description, mode: 'insensitive' };
+      }
       const careCharacteristics = await CareCharacteristicRepository.find({
-        where: { isDeleted: false },
+        where: whereConditions,
+        orderBy: orderByName === 'desc' ? 'desc' : 'asc', 
       });
-      res.status(200).json(careCharacteristics);
+      const result = careCharacteristics.map((careCharacteristic) => ({
+        ...careCharacteristic,
+        serviceCount: careCharacteristic.Service.length, 
+      }));
+      res.status(200).json(result);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
+  
+  
 
   static async updateCareCharacteristic(req: Request, res: Response) {
     const { id } = req.params;
