@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { CareCharacteristicRepository } from '../repositories/CareCharacteristicRepository';
+import { DEFAULT_CARE_CHARACTERISTICS } from '../util/constants';
+import { ServiceRepository } from '../repositories/ServiceRepository';
 
 export class CareCharacteristicController {
   static async createCareCharacteristic(req: Request, res: Response) {
@@ -76,14 +78,39 @@ export class CareCharacteristicController {
     const { id } = req.params;
 
     try {
+
+      if (DEFAULT_CARE_CHARACTERISTICS.includes(id)) {
+        res.status(400).json({
+         message: "Cannot delete default care characteristics.",
+       });
+     }
       const careCharacteristic = await CareCharacteristicRepository.findOne({
         where: { id, isDeleted: false },
+        
       });
+
+      const activeServices = await ServiceRepository.find({
+        where: {
+          isActive: true,
+          isDeleted: false,
+          CareCharacteristic:{some:{id:id}} 
+        },
+      });
+  
+      if (activeServices.length > 0) {
+            res.status(400).json({
+          message:
+            "Cannot delete care characteristic because it is linked to active services.",
+        });
+        return;
+      
+      }
 
       if (!careCharacteristic) {
         res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
+      
 
       await CareCharacteristicRepository.softDeleteCareCharacteristic(id);
       res.status(200).json({ message: 'Characteristic has been soft deleted' });
