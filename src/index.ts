@@ -1,21 +1,17 @@
 import express from 'express';
 import path from 'path';
-import { loadEnv } from './config/env';
 import { prisma } from './lib/prisma';
 
 import { auth } from 'express-openid-connect';
+import { loggerMiddleware } from './middlewares/loggerMiddleware';
 import applicationRoutes from './routes/applicationRoutes';
 import authRoutes from './routes/authRoutes';
 import careCharacteristicRoutes from './routes/careCharacteristicRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import userRoutes from './routes/userRoutes';
 
-// Inicialização do servidor
 const startServer = async () => {
   try {
-    // Primeiro, carrega as variáveis do Parameter Store
-    await loadEnv();
-
     const authConfig = {
       authRequired: false,
       auth0Logout: true,
@@ -31,6 +27,7 @@ const startServer = async () => {
     const trustedProxies = ['loopback', 'linklocal', 'uniquelocal'];
     app.set('trust proxy', trustedProxies);
 
+    app.use(loggerMiddleware);
     app.use(auth(authConfig));
     app.use(express.json());
 
