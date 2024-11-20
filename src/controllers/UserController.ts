@@ -255,9 +255,11 @@ export class UserController {
   };
   
 
-  public static readonly completeProfile: RequestHandler = async (req, res) => {
+  public static readonly completeProfile: RequestHandler = async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
+      const requestUser = req.user; 
+  
       const {
         location,
         specialty,
@@ -276,20 +278,34 @@ export class UserController {
         schedule,
         reviewsList,
       } = req.body;
-
+  
+      
+      if (requestUser?.userType !== USER_TYPES.BACKOFFICE && requestUser?.id !== id) {
+        res.status(403).json({ message: 'Access denied. You can only update your own profile.' });
+        return;
+      }
+  
       const user = await prisma.user.findUnique({
         where: { id },
         include: { ProfessionalProfile: true },
       });
-
+  
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
       }
-
+      if (user.userType === USER_TYPES.PROFESSIONAL) {
+        if (!location || !specialty || !price || !available) {
+          res.status(400).json({
+            message: 'Missing required fields for Professional user: location, specialty, price, available.',
+          });
+          return;
+        }
+      }
       const updatedUser = await prisma.user.update({
         where: { id },
         data: {
+          updatedAt: new Date(), 
           userType: USER_TYPES.PROFESSIONAL,
           ProfessionalProfile: {
             upsert: {
@@ -303,13 +319,13 @@ export class UserController {
                 available,
                 isPremium,
                 validated,
-                address,
-                certifications,
-                contacts,
-                social,
-                services,
-                schedule,
-                reviewsList,
+                address: address || {},
+                certifications: certifications || [],
+                contacts: contacts || {},
+                social: social || {},
+                services: services || [],
+                schedule: schedule || [],
+                reviewsList: reviewsList || [],
               },
               update: {
                 location,
@@ -321,13 +337,13 @@ export class UserController {
                 available,
                 isPremium,
                 validated,
-                address,
-                certifications,
-                contacts,
-                social,
-                services,
-                schedule,
-                reviewsList,
+                address: address || {},
+                certifications: certifications || [],
+                contacts: contacts || {},
+                social: social || {},
+                services: services || [],
+                schedule: schedule || [],
+                reviewsList: reviewsList || [],
               },
             },
           },
@@ -336,7 +352,7 @@ export class UserController {
           ProfessionalProfile: true,
         },
       });
-
+  
       res.status(200).json({
         message: 'Profile completed successfully',
         user: updatedUser,
@@ -348,6 +364,8 @@ export class UserController {
       });
     }
   };
+  
+  
 
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
