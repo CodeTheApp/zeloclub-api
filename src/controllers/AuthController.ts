@@ -8,10 +8,11 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { AuthService } from "../services/AuthService";
 import {
-  sendPasswordChangedNotification,
+  sendPasswordChanged,
   sendPasswordResetEmail,
 } from "../services/emailService";
 import { faker } from "@faker-js/faker";
+import { validateEmail, validatePassword } from "../util/validates";
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -55,33 +56,7 @@ export class AuthController {
   ) => {
     const { token, newPassword } = req.body;
 
-    const passwordPolicy = {
-      minLength: 8,
-      maxLength: 50,
-      requireUppercase: true,
-      requireLowercase: true,
-      requireNumbers: true,
-      requireSpecialChar: true,
-      allowedSpecialChars: "!@#$%^&*",
-    };
-
-    function validatePassword(password: string): boolean {
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLowerCase = /[a-z]/.test(password);
-      const hasNumbers = /\d/.test(password);
-      const hasSpecialChar = new RegExp(
-        `[${passwordPolicy.allowedSpecialChars}]`
-      ).test(password);
-
-      return (
-        password.length >= passwordPolicy.minLength &&
-        password.length <= passwordPolicy.maxLength &&
-        hasUpperCase &&
-        hasLowerCase &&
-        hasNumbers &&
-        hasSpecialChar
-      );
-    }
+    
 
     try {
       const user = await prisma.user.findFirst({
@@ -113,7 +88,7 @@ export class AuthController {
           updatedAt: new Date(),
         },
       });
-      await sendPasswordChangedNotification(user.email);
+      await sendPasswordChanged(user.email);
       res.status(200).json({ message: "Password has been reset successfully" });
     } catch (error) {
       console.error(error);
@@ -132,7 +107,20 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-
+      if (!name || !email || !password || !phoneNumber || !userType || !gender) {
+         res.status(400).json({ message: 'All fields are required' });
+         return
+      }
+      if (!validateEmail(email)) {
+         res.status(400).json({ message: 'Invalid email format' });
+         return
+      }
+      if (!validatePassword(password)) {
+         res.status(400).json({
+          message: 'Password must be 8-50 characters long, include uppercase, lowercase, a number, and a special character (!@#$%^&*)',
+        });
+        return
+      }
       const user = await AuthService.register(
         name,
         email,
@@ -142,12 +130,12 @@ export class AuthController {
         description,
         gender
       );
-
-      res.status(201).json({ message: "User registered successfully", user });
+  
+      res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -196,6 +184,18 @@ export class AuthController {
 
       const user = await prisma.user.findUnique({
         where: { email: auth0User.email },
+        select:{name:true,avatar:true,
+          email:true, 
+          gender:true, 
+          userType:true, 
+          phoneNumber:true, 
+          description:true, 
+          ProfessionalProfile:true, 
+          isDeleted:true,
+          Application:true,
+          Service:true,
+
+        }
       });
 
       if (!user) {
@@ -204,7 +204,7 @@ export class AuthController {
 
       res.status(200).json({
         message: "Login successful",
-        user: auth0User,
+        user: user,
       });
     } catch (error) {
       console.error("Auth0 login error:", error);

@@ -88,7 +88,7 @@ export const sendNotificationEmail = async (
 
   
 };
-export const sendPasswordChangedNotification = async (email: string) => {
+export const sendPasswordChanged = async (email: string) => {
   const mailerSend = createMailerInstance();
 
   const recipients = [new Recipient(email)];
@@ -117,3 +117,66 @@ export const sendPasswordChangedNotification = async (email: string) => {
     throw new Error('Failed to send password change notification email');
   }
 };
+
+export const sendEmailVerification = async (email: string) => {
+  const mailerSend = createMailerInstance();
+
+  const recipients = [new Recipient(email)];
+  const personalization = [
+    {
+      email,
+      data: {
+        account_name: 'Zeloclub',
+        support_email: 'contato@zeloclub.com.br',
+        verification_link: 'http://your-verification-link.com', // Link de verificação que não sei se temos
+      },
+    },
+  ];
+
+  const emailParams = new EmailParams()
+    .setFrom(defaultSender)
+    .setTo(recipients)
+    .setReplyTo(defaultSender)
+    .setSubject('Verificação de E-mail Obrigatória')
+    .setTemplateId('your-template-id-for-email-verification')  // ID do template para verificação de e-mail
+    .setPersonalization(personalization);
+
+  try {
+    await mailerSend.email.send(emailParams);
+  } catch (error) {
+    console.error('Error sending email verification notification:', error);
+    throw new Error('Failed to send email verification notification');
+  }
+};
+
+export const sendTermsAcceptanceNotification = async (email: string) => {
+  const mailerSend = createMailerInstance();
+
+  const recipients = [new Recipient(email)];
+  const personalization = [
+    {
+      email,
+      data: {
+        account_name: 'Zeloclub',
+        support_email: 'contato@zeloclub.com.br',
+        terms_link: 'http://your-terms-acceptance-link.com', // Link para aceitar os termos que não sei se temos
+      },
+    },
+  ];
+
+  const emailParams = new EmailParams()
+    .setFrom(defaultSender)
+    .setTo(recipients)
+    .setReplyTo(defaultSender)
+    .setSubject('Aceitação dos Termos Obrigatória')
+    .setTemplateId('your-template-id-for-terms-acceptance')  // ID do template para aceitação dos termos
+    .setPersonalization(personalization);
+
+  try {
+    await mailerSend.email.send(emailParams);
+  } catch (error) {
+    console.error('Error sending terms acceptance notification:', error);
+    throw new Error('Failed to send terms acceptance notification');
+  }
+};
+
