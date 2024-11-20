@@ -11,6 +11,7 @@ import {
   sendPasswordChangedNotification,
   sendPasswordResetEmail,
 } from "../services/emailService";
+import { faker } from "@faker-js/faker";
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -21,10 +22,10 @@ export class AuthController {
 
     try {
       const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
+    if (!user || user.isDeleted) {
+       res.status(404).json({ message: 'User not found or inactive' });
+       return
+    }
 
       const token =
         crypto.randomBytes(3).toString("hex") +
@@ -97,10 +98,11 @@ export class AuthController {
         return;
       }
       if (!validatePassword(newPassword)) {
-        return res.status(400).json({
+         res.status(400).json({
           message:
             "Password must be between 8-50 characters, including uppercase, lowercase, number, and special character (!@#$%^&*)",
         });
+        return
       }
       await prisma.user.update({
         where: { id: user.id },
