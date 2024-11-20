@@ -56,30 +56,45 @@ export class UserController {
   }
 };
 
-  public static readonly deleteUser: RequestHandler = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id },
-      });
-
-      if (!user || user.isDeleted) {
-        res.status(404).json({ message: 'User not found' });
-        return;
-      }
-
-      await prisma.user.update({
-        where: { id },
-        data: { isDeleted: true },
-      });
-
-      res.status(200).json({ message: 'User has been soft deleted' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+public static readonly deleteUser: RequestHandler = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        Service: true,
+        Application: true, 
+        ProfessionalProfile: true,
+      },
+    });
+    if (!user || user.isDeleted) {
+       res.status(404).json({ message: 'User not found or already deleted' });
+       return
     }
-  };
+    const updateServices = prisma.service.updateMany({
+      where: { User:{id:id} },
+      data: { isDeleted: true },
+    });
+    const updateApplications = prisma.application.updateMany({
+      where: { User:{id:id} },
+      data: { isDeleted: true },
+    });
+    const updateUser = prisma.user.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        updatedAt: new Date(), 
+      },
+    });
+    await Promise.all([updateServices, updateApplications, updateUser]);
+    res.status(200).json({ message: 'User and associated services/applications have been soft deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 
   // src/controllers/UserController.ts (continuação)
 
