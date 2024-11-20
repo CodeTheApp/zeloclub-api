@@ -7,43 +7,54 @@ import { sendPasswordResetEmail } from '../services/emailService';
 import { faker } from '@faker-js/faker';
 import { isUUID } from 'validator';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-
+import path from 'path';
 
 
 export class UserController {
-  public static readonly uploadAvatar: RequestHandler = async (req, res) => {
-    const { id } = req.params;
+  public static readonly uploadAvatar: RequestHandler = async (req:AuthenticatedRequest, res) => {
+    const formatAvatarFilename = (userId: string, file: Express.Multer.File): string => {
+      const timestamp = Date.now();
+      const extension = path.extname(file.originalname).toLowerCase();
+      return `avatar_${userId}_${timestamp}${extension}`;
+    };
+    const { id } = req.params; 
+  const requestUser = req.user;
 
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id },
-      });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
 
-      if (!user) {
-        res.status(404).json({ message: 'User not found' });
-        return;
-      }
-
-      if (req.file && (req.file as any).location) {
-        await prisma.user.update({
-          where: { id },
-          data: {
-            avatar: (req.file as any).location,
-          },
-        });
-
-        res.status(200).json({
-          message: 'Avatar uploaded successfully',
-          avatarUrl: (req.file as any).location,
-        });
-      } else {
-        res.status(400).json({ message: 'No file uploaded' });
-      }
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
-  };
+
+    if (requestUser?.userType !== 'Backoffice' && requestUser?.id !== id) {
+      res.status(403).json({ message: 'Access denied. You can only update your own avatar.' });
+      return;
+    }
+    if (req.file) {
+      const newAvatarFilename = formatAvatarFilename(id, req.file);
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: {
+          avatar: newAvatarFilename,
+          updatedAt: new Date(), 
+        },
+      });
+      res.status(200).json({
+        message: 'Avatar uploaded successfully',
+        avatarUrl: newAvatarFilename, 
+      });
+    } else {
+      res.status(400).json({ message: 'No file uploaded' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
   public static readonly deleteUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
