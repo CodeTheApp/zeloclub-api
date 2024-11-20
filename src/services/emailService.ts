@@ -83,4 +83,37 @@ export const sendNotificationEmail = async (
     console.error('Error sending notification email:', error);
     throw new Error('Failed to send notification email');
   }
+
+
+
+  
+};
+export const sendPasswordChangedNotification = async (email: string) => {
+  const mailerSend = createMailerInstance();
+
+  const recipients = [new Recipient(email)];
+  const personalization = [
+    {
+      email,
+      data: {
+        account_name: 'Zeloclub',
+        support_email: 'contato@zeloclub.com.br',
+      },
+    },
+  ];
+
+  const emailParams = new EmailParams()
+    .setFrom(defaultSender)
+    .setTo(recipients)
+    .setReplyTo(defaultSender)
+    .setSubject('Sua senha foi alterada com sucesso')
+    .setTemplateId('your-template-id-for-password-changed')  
+    .setPersonalization(personalization);
+
+  try {
+    await mailerSend.email.send(emailParams);
+  } catch (error) {
+    console.error('Error sending password change notification email:', error);
+    throw new Error('Failed to send password change notification email');
+  }
 };

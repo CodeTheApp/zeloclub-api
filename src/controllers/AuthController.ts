@@ -1,13 +1,16 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 
-import axios from 'axios';
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
-import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
-import { AuthService } from '../services/AuthService';
-import { sendPasswordResetEmail } from '../services/emailService';
+import axios from "axios";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { Request, Response } from "express";
+import { prisma } from "../lib/prisma";
+import { AuthService } from "../services/AuthService";
+import {
+  sendPasswordChangedNotification,
+  sendPasswordResetEmail,
+} from "../services/emailService";
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -19,14 +22,14 @@ export class AuthController {
     try {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
-        res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ message: "User not found" });
         return;
       }
 
       const token =
-        crypto.randomBytes(3).toString('hex') +
-        '-' +
-        crypto.randomBytes(3).toString('hex');
+        crypto.randomBytes(3).toString("hex") +
+        "-" +
+        crypto.randomBytes(3).toString("hex");
 
       await prisma.user.update({
         where: { id: user.id },
@@ -36,13 +39,12 @@ export class AuthController {
         },
       });
 
-      
       await sendPasswordResetEmail(user.email, token);
 
-      res.status(200).json({ message: 'Password reset email sent' });
+      res.status(200).json({ message: "Password reset email sent" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -51,6 +53,34 @@ export class AuthController {
     res: Response
   ) => {
     const { token, newPassword } = req.body;
+
+    const passwordPolicy = {
+      minLength: 8,
+      maxLength: 50,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumbers: true,
+      requireSpecialChar: true,
+      allowedSpecialChars: "!@#$%^&*",
+    };
+
+    function validatePassword(password: string): boolean {
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumbers = /\d/.test(password);
+      const hasSpecialChar = new RegExp(
+        `[${passwordPolicy.allowedSpecialChars}]`
+      ).test(password);
+
+      return (
+        password.length >= passwordPolicy.minLength &&
+        password.length <= passwordPolicy.maxLength &&
+        hasUpperCase &&
+        hasLowerCase &&
+        hasNumbers &&
+        hasSpecialChar
+      );
+    }
 
     try {
       const user = await prisma.user.findFirst({
@@ -63,24 +93,29 @@ export class AuthController {
       });
 
       if (!user) {
-        res.status(400).json({ message: 'Invalid or expired token' });
+        res.status(400).json({ message: "Invalid or expired token" });
         return;
       }
-
-      // Atualizar a senha e limpar os campos de recuperação
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({
+          message:
+            "Password must be between 8-50 characters, including uppercase, lowercase, number, and special character (!@#$%^&*)",
+        });
+      }
       await prisma.user.update({
         where: { id: user.id },
         data: {
           password: await bcrypt.hash(newPassword, 10),
           resetPasswordToken: null,
           resetPasswordExpires: null,
+          updatedAt: new Date(),
         },
       });
-
-      res.status(200).json({ message: 'Password has been reset successfully' });
+      await sendPasswordChangedNotification(user.email);
+      res.status(200).json({ message: "Password has been reset successfully" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -95,7 +130,7 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-      
+
       const user = await AuthService.register(
         name,
         email,
@@ -106,11 +141,11 @@ export class AuthController {
         gender
       );
 
-      res.status(201).json({ message: 'User registered successfully', user });
+      res.status(201).json({ message: "User registered successfully", user });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -119,11 +154,11 @@ export class AuthController {
     try {
       const { email, password } = req.body;
       const token = await AuthService.login(email, password);
-      res.status(200).json({ message: 'Login successful', token });
+      res.status(200).json({ message: "Login successful", token });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -131,21 +166,19 @@ export class AuthController {
   public static readonly me = async (req: Request, res: Response) => {
     try {
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Token is missing or invalid' });
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Token is missing or invalid" });
       }
-      const token = authHeader.split(' ')[1];
+      const token = authHeader.split(" ")[1];
       const user = await AuthService.getUserFromToken(token);
       res.status(200).json({ user });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
-  
-  
 
   public static readonly auth0Login = async (req: Request, res: Response) => {
     try {
@@ -164,18 +197,18 @@ export class AuthController {
       });
 
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       res.status(200).json({
-        message: 'Login successful',
+        message: "Login successful",
         user: auth0User,
       });
     } catch (error) {
-      console.error('Auth0 login error:', error);
+      console.error("Auth0 login error:", error);
       res.status(400).json({
         message:
-          error instanceof Error ? error.message : 'Authentication failed',
+          error instanceof Error ? error.message : "Authentication failed",
       });
     }
   };
