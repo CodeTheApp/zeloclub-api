@@ -8,6 +8,8 @@ import { faker } from "@faker-js/faker";
 import { isUUID } from "validator";
 import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 import path from "path";
+import { completeProfileSchema, createBackofficeUserSchema, createProfessionalSchema } from "../schemas/ProfessionalProfile";
+import { getAllBackofficeUsersSchema, getAllUsersSchema, getUserByIdSchema } from "../schemas/User";
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (
@@ -115,6 +117,12 @@ export class UserController {
     res
   ) => {
     try {
+
+      const result = createProfessionalSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        return;
+      }
       const {
         name,
         email,
@@ -216,6 +224,11 @@ export class UserController {
     res
   ) => {
     try {
+      const result = createBackofficeUserSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        return;
+      }
       const { name, email, phoneNumber, avatar, description, gender } =
         req.body;
 
@@ -295,6 +308,12 @@ export class UserController {
     try {
       const { id } = req.params;
       const requestUser = req.user;
+      
+      const result = completeProfileSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        return;
+      }
 
       const {
         location,
@@ -412,8 +431,9 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      if (!isUUID(id)) {
-        res.status(400).json({ message: "Invalid UUID format" });
+      const result = getUserByIdSchema.safeParse({ id });
+      if (!result.success) {
+        res.status(400).json({ message: result.error.errors[0].message });
         return;
       }
 
@@ -452,6 +472,11 @@ export class UserController {
     res
   ) => {
     try {
+      const result = getAllUsersSchema.safeParse(req.query);
+      if (!result.success) {
+        res.status(400).json({ message: result.error.errors[0].message });
+        return;
+      }
       const {
         page = 1,
         pageSize = 10,
@@ -511,6 +536,11 @@ export class UserController {
     res
   ) => {
     try {
+      const result = getAllBackofficeUsersSchema.safeParse(req.query);
+      if (!result.success) {
+        res.status(400).json({ message: result.error.errors[0].message });
+        return;
+      }
       const { name, email, gender, page = 1, limit = 10 } = req.query;
 
       const filters: any = {

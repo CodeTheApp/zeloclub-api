@@ -12,9 +12,9 @@ import {
   sendPasswordChanged,
   sendPasswordResetEmail,
 } from "../services/emailService";
-import { faker } from "@faker-js/faker";
 import { validateEmail, validatePassword } from "../util/validates";
 import { logger } from '../lib/logger/winston';
+import { loginSchema, registerSchema, requestPasswordResetSchema, resetPasswordSchema } from "../schemas/User";
 
 
 
@@ -26,6 +26,16 @@ export class AuthController {
     const { email } = req.body;
 
     try {
+      const validation = requestPasswordResetSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0].message;
+      res.status(400).json({ message: errorMessage });
+      logger.warn("Request password reset validation failed", {
+        errors: validation.error.errors,
+      });
+      return;
+    }
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user || user.isDeleted) {
         res.status(404).json({ message: "User not found or inactive" });
@@ -66,6 +76,13 @@ export class AuthController {
     const { token, newPassword } = req.body;
 
     try {
+      const validation = resetPasswordSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0].message;
+      res.status(400).json({ message: errorMessage });
+      return;
+    }
       const user = await prisma.user.findFirst({
         where: {
           resetPasswordToken: token,
@@ -105,6 +122,13 @@ export class AuthController {
 
   public static readonly register = async (req: Request, res: Response) => {
     try {
+      const validation = registerSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        const errorMessage = validation.error.errors[0].message;
+        res.status(400).json({ message: errorMessage });
+        return;
+      }
       const {
         name,
         email,
@@ -161,6 +185,13 @@ export class AuthController {
 
   public static readonly login = async (req: Request, res: Response) => {
     try {
+      const validation = loginSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        const errorMessage = validation.error.errors[0].message;
+        res.status(400).json({ message: errorMessage });
+        return;
+      }
       const { email, password } = req.body;
       logger.info('Login user', { email: email });
 

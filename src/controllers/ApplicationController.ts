@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { USER_TYPES } from '../entities/User';
 import { prisma } from '../lib/prisma';
 import { sendNotificationEmail } from '../services/emailService';
+import { applyForServiceSchema, updateApplicationStatusSchema } from '../schemas/Application';
 
 export class ApplicationController {
   static async updateApplicationStatus(req: Request, res: Response) {
@@ -9,14 +10,12 @@ export class ApplicationController {
     const { status } = req.body;
     const requestUserId = (req as any).user.id;
     const requestUserType = (req as any).user.userType;
-
-    const allowedStatuses = ['Accepted', 'Rejected'];
-    if (!allowedStatuses.includes(status)) {
-      res.status(400).json({ message: 'Invalid status' });
-      return;
-    }
-
     try {
+      const result = updateApplicationStatusSchema.safeParse({ status });
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.error.errors[0].message });
+    }
       const application = await prisma.application.findUnique({
         where: { id: applicationId },
         include: {
@@ -120,6 +119,11 @@ export class ApplicationController {
     const userId = (req as any).user.id;
 
     try {
+      const result = applyForServiceSchema.safeParse({ serviceId });
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.error.errors[0].message });
+    }
       const service = await prisma.service.findFirst({
         where: {
           id: serviceId,
@@ -207,6 +211,11 @@ export class ApplicationController {
     const { serviceId } = req.params;
 
     try {
+      const result = applyForServiceSchema.safeParse({ serviceId });
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.error.errors[0].message });
+    }
       const service = await prisma.service.findUnique({
         where: { id: serviceId },
         select: {
