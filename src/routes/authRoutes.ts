@@ -9,7 +9,7 @@ const router = Router();
 // Rate Limiters
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10,
+  max: 5,
   message: {
     message: 'Too many login attempts. Please try again later.',
   },
@@ -19,7 +19,7 @@ const loginLimiter = rateLimit({
 
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 3000,
+  max: 3,
   message: {
     message: 'Too many password reset attempts. Please try again later.',
   },
@@ -48,6 +48,5 @@ router.get('/me', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 export default router;
