@@ -7,7 +7,7 @@ import { authenticate, authorize } from '../middlewares/authMiddleware';
 const router = Router();
 
 const serviceLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutos
   max: 10,
   message: {
     message: 'Too many login attempts. Please try again later.',
