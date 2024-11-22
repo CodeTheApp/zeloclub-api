@@ -103,14 +103,15 @@ export class ApplicationController {
         status,
         application.Service.name
       );
-
-       res.status(200).json({
+      res.status(200).json({
         message: 'Application status updated successfully',
         status,
       });
+      return;
     } catch (error) {
       console.error(error);
-       res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: 'Internal server error' });
+      return;
     }
   }
 
