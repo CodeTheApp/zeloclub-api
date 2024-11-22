@@ -1,100 +1,112 @@
 // src/controllers/UserController.ts
-import bcrypt from 'bcrypt';
-import { RequestHandler } from 'express';
-import { USER_TYPES } from '../../types';
-import { prisma } from '../lib/prisma';
-import { sendPasswordResetEmail } from '../services/emailService';
-import { faker } from '@faker-js/faker';
-import { isUUID } from 'validator';
-import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-import path from 'path';
-
+import bcrypt from "bcrypt";
+import { RequestHandler } from "express";
+import { USER_TYPES } from "../../types";
+import { prisma } from "../lib/prisma";
+import { sendPasswordResetEmail } from "../services/emailService";
+import { faker } from "@faker-js/faker";
+import { isUUID } from "validator";
+import { AuthenticatedRequest } from "../middlewares/authMiddleware";
+import path from "path";
 
 export class UserController {
-  public static readonly uploadAvatar: RequestHandler = async (req:AuthenticatedRequest, res) => {
-    const formatAvatarFilename = (userId: string, file: Express.Multer.File): string => {
+  public static readonly uploadAvatar: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
+    const formatAvatarFilename = (
+      userId: string,
+      file: Express.Multer.File
+    ): string => {
       const timestamp = Date.now();
       const extension = path.extname(file.originalname).toLowerCase();
       return `avatar_${userId}_${timestamp}${extension}`;
     };
-    const { id } = req.params; 
-  const requestUser = req.user;
+    const { id } = req.params;
+    const requestUser = req.user;
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
-
-    if (requestUser?.userType !== 'Backoffice' && requestUser?.id !== id) {
-      res.status(403).json({ message: 'Access denied. You can only update your own avatar.' });
-      return;
-    }
-    if (req.file) {
-      const newAvatarFilename = formatAvatarFilename(id, req.file);
-      const updatedUser = await prisma.user.update({
+    try {
+      const user = await prisma.user.findUnique({
         where: { id },
-        data: {
-          avatar: newAvatarFilename,
-          updatedAt: new Date(), 
+      });
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      if (requestUser?.userType !== "Backoffice" && requestUser?.id !== id) {
+        res
+          .status(403)
+          .json({
+            message: "Access denied. You can only update your own avatar.",
+          });
+        return;
+      }
+      if (req.file) {
+        const newAvatarFilename = formatAvatarFilename(id, req.file);
+        const updatedUser = await prisma.user.update({
+          where: { id },
+          data: {
+            avatar: newAvatarFilename,
+            updatedAt: new Date(),
+          },
+        });
+        res.status(200).json({
+          message: "Avatar uploaded successfully",
+          avatarUrl: newAvatarFilename,
+        });
+      } else {
+        res.status(400).json({ message: "No file uploaded" });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+
+  public static readonly deleteUser: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: {
+          Service: true,
+          Application: true,
+          ProfessionalProfile: true,
         },
       });
-      res.status(200).json({
-        message: 'Avatar uploaded successfully',
-        avatarUrl: newAvatarFilename, 
+      if (!user || user.isDeleted) {
+        res.status(404).json({ message: "User not found or already deleted" });
+        return;
+      }
+      const updateServices = prisma.service.updateMany({
+        where: { User: { id: id } },
+        data: { isDeleted: true },
       });
-    } else {
-      res.status(400).json({ message: 'No file uploaded' });
+      const updateApplications = prisma.application.updateMany({
+        where: { User: { id: id } },
+        data: { isDeleted: true },
+      });
+      const updateUser = prisma.user.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          updatedAt: new Date(),
+        },
+      });
+      await Promise.all([updateServices, updateApplications, updateUser]);
+      res
+        .status(200)
+        .json({
+          message:
+            "User and associated services/applications have been soft deleted",
+        });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-public static readonly deleteUser: RequestHandler = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        Service: true,
-        Application: true, 
-        ProfessionalProfile: true,
-      },
-    });
-    if (!user || user.isDeleted) {
-       res.status(404).json({ message: 'User not found or already deleted' });
-       return
-    }
-    const updateServices = prisma.service.updateMany({
-      where: { User:{id:id} },
-      data: { isDeleted: true },
-    });
-    const updateApplications = prisma.application.updateMany({
-      where: { User:{id:id} },
-      data: { isDeleted: true },
-    });
-    const updateUser = prisma.user.update({
-      where: { id },
-      data: {
-        isDeleted: true,
-        updatedAt: new Date(), 
-      },
-    });
-    await Promise.all([updateServices, updateApplications, updateUser]);
-    res.status(200).json({ message: 'User and associated services/applications have been soft deleted' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-
+  };
 
   // src/controllers/UserController.ts (continuação)
 
@@ -118,8 +130,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
         price,
         reviews,
         available,
-        isPremium,
-        validated,
+        isCompleted,
+        isValidated,
         address,
         certifications,
         contacts,
@@ -137,12 +149,12 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
       });
 
       if (existingUser?.email === email) {
-        res.status(400).json({ message: 'Email already in use' });
+        res.status(400).json({ message: "Email already in use" });
         return;
       }
 
       if (existingUser?.phoneNumber === phoneNumber) {
-        res.status(400).json({ message: 'Phone number already in use' });
+        res.status(400).json({ message: "Phone number already in use" });
         return;
       }
 
@@ -152,7 +164,7 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
       // Cria o usuário com o perfil profissional em uma única transação
       const user = await prisma.user.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           email,
           password: hashedPassword,
@@ -170,8 +182,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
               price,
               reviews: reviews || 0,
               available,
-              isPremium,
-              validated,
+              isCompleted,
+              isValidated,
               address,
               certifications,
               contacts,
@@ -188,13 +200,13 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
       });
 
       res.status(201).json({
-        message: 'Professional user created successfully',
+        message: "Professional user created successfully",
         user,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -204,36 +216,32 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
     res
   ) => {
     try {
-      const {
-        name,
-        email,
-        phoneNumber,
-        avatar,
-        description,
-        gender,
-      } = req.body;
-  
+      const { name, email, phoneNumber, avatar, description, gender } =
+        req.body;
+
       const existingUser = await prisma.user.findFirst({
         where: {
           OR: [{ email }, { phoneNumber }],
         },
       });
-  
+
       if (existingUser?.email === email) {
-        res.status(400).json({ message: 'Email already in use' });
+        res.status(400).json({ message: "Email already in use" });
         return;
       }
-  
+
       if (existingUser?.phoneNumber === phoneNumber) {
-        res.status(400).json({ message: 'Phone number already in use' });
+        res.status(400).json({ message: "Phone number already in use" });
         return;
       }
-  
-   
-      const temporaryPassword = faker.internet.password({ length: 6, memorable: true, pattern: /[A-NP-Z1-9]/}) // '1-9 a-z retirando "O" e "0" pq sao parecidos'
+
+      const temporaryPassword = faker.internet.password({
+        length: 6,
+        memorable: true,
+        pattern: /[A-NP-Z1-9]/,
+      }); // '1-9 a-z retirando "O" e "0" pq sao parecidos'
       const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-  
-    
+
       const user = await prisma.user.create({
         data: {
           updatedAt: new Date(),
@@ -247,11 +255,10 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
           userType: USER_TYPES.BACKOFFICE,
         },
       });
-  
-      
+
       const token =
-        faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
-  
+        faker.string.alphanumeric(6) + "-" + faker.string.alphanumeric(6);
+
       await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -259,12 +266,13 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
           resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
         },
       });
-  
+
       await sendPasswordResetEmail(email, token);
-      console.log(token)
-  
+      console.log(token);
+
       res.status(201).json({
-        message: 'Backoffice user created successfully. A password reset email has been sent.',
+        message:
+          "Backoffice user created successfully. A password reset email has been sent.",
         user: {
           id: user.id,
           name: user.name,
@@ -275,17 +283,19 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
-  
 
-  public static readonly completeProfile: RequestHandler = async (req: AuthenticatedRequest, res) => {
+  public static readonly completeProfile: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
     try {
       const { id } = req.params;
-      const requestUser = req.user; 
-  
+      const requestUser = req.user;
+
       const {
         location,
         specialty,
@@ -294,8 +304,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
         price,
         reviews,
         available,
-        isPremium,
-        validated,
+        isCompleted,
+        isValidated,
         address,
         certifications,
         contacts,
@@ -304,26 +314,33 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
         schedule,
         reviewsList,
       } = req.body;
-  
-      
-      if (requestUser?.userType !== USER_TYPES.BACKOFFICE && requestUser?.id !== id) {
-        res.status(403).json({ message: 'Access denied. You can only update your own profile.' });
+
+      if (
+        requestUser?.userType !== USER_TYPES.BACKOFFICE &&
+        requestUser?.id !== id
+      ) {
+        res
+          .status(403)
+          .json({
+            message: "Access denied. You can only update your own profile.",
+          });
         return;
       }
-  
+
       const user = await prisma.user.findUnique({
         where: { id },
         include: { ProfessionalProfile: true },
       });
-  
+
       if (!user) {
-        res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ message: "User not found" });
         return;
       }
       if (user.userType === USER_TYPES.PROFESSIONAL) {
         if (!location || !specialty || !price || !available) {
           res.status(400).json({
-            message: 'Missing required fields for Professional user: location, specialty, price, available.',
+            message:
+              "Missing required fields for Professional user: location, specialty, price, available.",
           });
           return;
         }
@@ -331,7 +348,7 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
       const updatedUser = await prisma.user.update({
         where: { id },
         data: {
-          updatedAt: new Date(), 
+          updatedAt: new Date(),
           userType: USER_TYPES.PROFESSIONAL,
           ProfessionalProfile: {
             upsert: {
@@ -343,8 +360,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
                 price,
                 reviews: reviews || 0,
                 available,
-                isPremium,
-                validated,
+                isCompleted,
+                isValidated,
                 address: address || {},
                 certifications: certifications || [],
                 contacts: contacts || {},
@@ -361,8 +378,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
                 price,
                 reviews: reviews || 0,
                 available,
-                isPremium,
-                validated,
+                isCompleted:true,
+                isValidated,
                 address: address || {},
                 certifications: certifications || [],
                 contacts: contacts || {},
@@ -378,32 +395,30 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
           ProfessionalProfile: true,
         },
       });
-  
+
       res.status(200).json({
-        message: 'Profile completed successfully',
+        message: "Profile completed successfully",
         user: updatedUser,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
-  
-  
 
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
       const { id } = req.params;
 
       if (!isUUID(id)) {
-         res.status(400).json({ message: 'Invalid UUID format' });
-         return
+        res.status(400).json({ message: "Invalid UUID format" });
+        return;
       }
 
       const user = await prisma.user.findUnique({
-        where: { id,isDeleted:false },
+        where: { id, isDeleted: false },
         select: {
           id: true,
           name: true,
@@ -418,41 +433,50 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
       });
 
       if (!user) {
-         res.status(404).json({ message: 'User not found' });
-         return
+        res.status(404).json({ message: "User not found" });
+        return;
       }
 
       res.status(200).json({ user });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
 
   //GET /users?page=1&pageSize=5&sortBy=name&sortOrder=desc&userType=Admin&gender=Male
-  public static readonly getAllUsers: RequestHandler = async (req:AuthenticatedRequest, res) => {
+  public static readonly getAllUsers: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
     try {
-      const { page = 1, pageSize = 10, sortBy = 'createdAt', sortOrder = 'asc', ...filters } = req.query;
-  
+      const {
+        page = 1,
+        pageSize = 10,
+        sortBy = "createdAt",
+        sortOrder = "asc",
+        ...filters
+      } = req.query;
+
       const pageNumber = Number(page);
       const pageSizeNumber = Number(pageSize);
       const skip = (pageNumber - 1) * pageSizeNumber;
-      const requestUser = req.user; 
-      const isBackofficeUser = requestUser?.userType === USER_TYPES.BACKOFFICE
+      const requestUser = req.user;
+      const isBackofficeUser = requestUser?.userType === USER_TYPES.BACKOFFICE;
       const whereConditions: any = {
-        ...filters, 
-      }
+        ...filters,
+      };
       if (!isBackofficeUser) {
         whereConditions.isDeleted = false;
-        
       }
-      const orderBy: Record<string, 'asc' | 'desc'> = {};
-      if (typeof sortBy === 'string') {
-        orderBy[sortBy] = sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc';
+      const orderBy: Record<string, "asc" | "desc"> = {};
+      if (typeof sortBy === "string") {
+        orderBy[sortBy] =
+          sortOrder === "asc" || sortOrder === "desc" ? sortOrder : "asc";
       }
-  
+
       const users = await prisma.user.findMany({
         where: whereConditions,
         select: {
@@ -471,16 +495,15 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
         take: pageSizeNumber,
         orderBy,
       });
-  
+
       res.status(200).json({ users });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
-  
 
   //GET /backoffice-users?name=Jane&email=@example.com&gender=Female&page=1&limit=10
   public static readonly getAllBackofficeUsers: RequestHandler = async (
@@ -488,26 +511,20 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
     res
   ) => {
     try {
-      const {
-        name,
-        email,
-        gender,
-        page = 1,
-        limit = 10,
-      } = req.query;
-  
+      const { name, email, gender, page = 1, limit = 10 } = req.query;
+
       const filters: any = {
         userType: USER_TYPES.BACKOFFICE,
         isDeleted: false,
       };
       if (name) {
-        filters.name = { contains: name, mode: 'insensitive' };
+        filters.name = { contains: name, mode: "insensitive" };
       }
-  
+
       if (email) {
-        filters.email = { contains: email, mode: 'insensitive' };
+        filters.email = { contains: email, mode: "insensitive" };
       }
-  
+
       if (gender) {
         filters.gender = gender;
       }
@@ -542,9 +559,8 @@ public static readonly deleteUser: RequestHandler = async (req, res) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
-  
 }

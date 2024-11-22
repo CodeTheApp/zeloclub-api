@@ -23,10 +23,10 @@ export class AuthController {
 
     try {
       const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.isDeleted) {
-       res.status(404).json({ message: 'User not found or inactive' });
-       return
-    }
+      if (!user || user.isDeleted) {
+        res.status(404).json({ message: "User not found or inactive" });
+        return;
+      }
 
       const token =
         crypto.randomBytes(3).toString("hex") +
@@ -56,8 +56,6 @@ export class AuthController {
   ) => {
     const { token, newPassword } = req.body;
 
-    
-
     try {
       const user = await prisma.user.findFirst({
         where: {
@@ -73,11 +71,11 @@ export class AuthController {
         return;
       }
       if (!validatePassword(newPassword)) {
-         res.status(400).json({
+        res.status(400).json({
           message:
             "Password must be between 8-50 characters, including uppercase, lowercase, number, and special character (!@#$%^&*)",
         });
-        return
+        return;
       }
       await prisma.user.update({
         where: { id: user.id },
@@ -107,19 +105,27 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-      if (!name || !email || !password || !phoneNumber || !userType || !gender) {
-         res.status(400).json({ message: 'All fields are required' });
-         return
+      if (
+        !name ||
+        !email ||
+        !password ||
+        !phoneNumber ||
+        !userType ||
+        !gender
+      ) {
+        res.status(400).json({ message: "All fields are required" });
+        return;
       }
       if (!validateEmail(email)) {
-         res.status(400).json({ message: 'Invalid email format' });
-         return
+        res.status(400).json({ message: "Invalid email format" });
+        return;
       }
       if (!validatePassword(password)) {
-         res.status(400).json({
-          message: 'Password must be 8-50 characters long, include uppercase, lowercase, a number, and a special character (!@#$%^&*)',
+        res.status(400).json({
+          message:
+            "Password must be 8-50 characters long, include uppercase, lowercase, a number, and a special character (!@#$%^&*)",
         });
-        return
+        return;
       }
       const user = await AuthService.register(
         name,
@@ -130,12 +136,12 @@ export class AuthController {
         description,
         gender
       );
-  
-      res.status(201).json({ message: 'User registered successfully', user });
+
+      res.status(201).json({ message: "User registered successfully", user });
     } catch (error) {
       console.error(error);
       res.status(400).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -161,7 +167,27 @@ export class AuthController {
       }
       const token = authHeader.split(" ")[1];
       const user = await AuthService.getUserFromToken(token);
-      res.status(200).json({ user });
+      const result = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          name: true,
+          avatar: true,
+          email: true,
+          gender: true,
+          userType: true,
+          isPremium: true,
+          phoneNumber: true,
+          description: true,
+          ProfessionalProfile: {
+            select: {
+              isCompleted: true,
+              isValidated: true,
+            },
+          },
+          isDeleted: true,
+        },
+      });
+      res.status(200).json({ result });
     } catch (error) {
       console.error(error);
       res.status(400).json({
@@ -184,18 +210,19 @@ export class AuthController {
 
       const user = await prisma.user.findUnique({
         where: { email: auth0User.email },
-        select:{name:true,avatar:true,
-          email:true, 
-          gender:true, 
-          userType:true, 
-          phoneNumber:true, 
-          description:true, 
-          ProfessionalProfile:true, 
-          isDeleted:true,
-          Application:true,
-          Service:true,
-
-        }
+        select: {
+          name: true,
+          avatar: true,
+          email: true,
+          gender: true,
+          userType: true,
+          phoneNumber: true,
+          description: true,
+          ProfessionalProfile: true,
+          isDeleted: true,
+          Application: true,
+          Service: true,
+        },
       });
 
       if (!user) {

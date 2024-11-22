@@ -40,8 +40,8 @@ model ProfessionalProfile {
   price          Float
   reviews        Int     @default(0)
   available      Boolean @default(true)
-  isPremium      Boolean @default(false)
-  validated      Boolean @default(false)
+  isCompleted    Boolean @default(false) 
+  isValidated    Boolean @default(false)
   address        Json
   certifications Json
   contacts       Json
@@ -66,7 +66,7 @@ model Service {
   isDeleted          Boolean              @default(false)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
-  acceptApplications Boolean @default(false)
+  acceptApplications Boolean              @default(false)
   quantityVacancies  Int                  @default(1)
   createdById        String
   Application        Application[]
@@ -86,6 +86,7 @@ model User {
   userType             UserType             @default(Customer)
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  isPremium            Boolean?              @default(false)
   isDeleted            Boolean              @default(false)
   createdAt            DateTime             @default(now())
   updatedAt            DateTime

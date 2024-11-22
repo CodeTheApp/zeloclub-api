@@ -43,18 +43,20 @@ export class ServiceController {
       } = req.body;
 
       if (!name || !description || !careCharacteristics) {
-        return res.status(400).json({
+         res.status(400).json({
           message: 'Name, description and careCharacteristics are required',
         });
+        return
       }
 
       if (
         !Array.isArray(careCharacteristics) ||
         careCharacteristics.length === 0
       ) {
-        return res.status(400).json({
+         res.status(400).json({
           message: 'At least one care characteristic is required',
         });
+        return
       }
 
       const user = await prisma.user.findUnique({
