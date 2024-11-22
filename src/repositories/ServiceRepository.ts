@@ -39,7 +39,7 @@ class ServiceRepositoryClass {
     if (data.id) {
       const { id, ...updateData } = data;
       return await prisma.service.update({
-        where: { id },
+        where: { id ,deletedAt: null},
         data: updateData,
         include: {
           CareCharacteristic: true,
@@ -53,7 +53,7 @@ class ServiceRepositoryClass {
 
   async update(id: string, data: Prisma.ServiceUpdateInput) {
     return await prisma.service.update({
-      where: { id },
+      where: { id,deletedAt: null },
       data,
       include: {
         CareCharacteristic: true,
@@ -67,7 +67,7 @@ class ServiceRepositoryClass {
     return await prisma.service.update({
       where: { id },
       data: {
-        isDeleted: true,
+        deletedAt: new Date(),
       },
     });
   }

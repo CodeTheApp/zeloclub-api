@@ -29,7 +29,7 @@ export class UserController {
 
     try {
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id ,deletedAt: null},
       });
 
       if (!user) {
@@ -48,7 +48,7 @@ export class UserController {
       if (req.file) {
         const newAvatarFilename = formatAvatarFilename(id, req.file);
         const updatedUser = await prisma.user.update({
-          where: { id },
+          where: { id ,deletedAt: null},
           data: {
             avatar: newAvatarFilename,
             updatedAt: new Date(),
@@ -71,29 +71,29 @@ export class UserController {
     const { id } = req.params;
     try {
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id,deletedAt: null },
         include: {
           Service: true,
           Application: true,
           ProfessionalProfile: true,
         },
       });
-      if (!user || user.isDeleted) {
+      if (!user || user.deletedAt instanceof Date) {
         res.status(404).json({ message: "User not found or already deleted" });
         return;
       }
       const updateServices = prisma.service.updateMany({
         where: { User: { id: id } },
-        data: { isDeleted: true },
+        data: {deletedAt: new Date()},
       });
       const updateApplications = prisma.application.updateMany({
         where: { User: { id: id } },
-        data: { isDeleted: true },
+        data: { deletedAt: new Date() },
       });
       const updateUser = prisma.user.update({
         where: { id },
         data: {
-          isDeleted: true,
+          deletedAt: new Date(),
           updatedAt: new Date(),
         },
       });
@@ -151,7 +151,7 @@ export class UserController {
 
       // Verifica se o email ou número de telefone já existem
       const existingUser = await prisma.user.findFirst({
-        where: {
+        where: {deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
@@ -233,7 +233,7 @@ export class UserController {
         req.body;
 
       const existingUser = await prisma.user.findFirst({
-        where: {
+        where: {deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
@@ -273,7 +273,7 @@ export class UserController {
         faker.string.alphanumeric(6) + "-" + faker.string.alphanumeric(6);
 
       await prisma.user.update({
-        where: { id: user.id },
+        where: { id: user.id ,deletedAt: null},
         data: {
           resetPasswordToken: token,
           resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
@@ -347,7 +347,7 @@ export class UserController {
       }
 
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id,deletedAt: null },
         include: { ProfessionalProfile: true },
       });
 
@@ -365,7 +365,7 @@ export class UserController {
         }
       }
       const updatedUser = await prisma.user.update({
-        where: { id },
+        where: { id,deletedAt: null },
         data: {
           updatedAt: new Date(),
           userType: USER_TYPES.PROFESSIONAL,
@@ -438,7 +438,7 @@ export class UserController {
       }
 
       const user = await prisma.user.findUnique({
-        where: { id, isDeleted: false },
+        where: { id, deletedAt: null},
         select: {
           id: true,
           name: true,
@@ -494,7 +494,7 @@ export class UserController {
         ...filters,
       };
       if (!isBackofficeUser) {
-        whereConditions.isDeleted = false;
+        whereConditions.deletedAt=== null;
       }
       const orderBy: Record<string, "asc" | "desc"> = {};
       if (typeof sortBy === "string") {
@@ -512,7 +512,6 @@ export class UserController {
           description: true,
           userType: true,
           phoneNumber: true,
-          isDeleted: true,
           gender: true,
           ProfessionalProfile: true,
         },
@@ -545,7 +544,7 @@ export class UserController {
 
       const filters: any = {
         userType: USER_TYPES.BACKOFFICE,
-        isDeleted: false,
+        deletedAt: null,
       };
       if (name) {
         filters.name = { contains: name, mode: "insensitive" };

@@ -1,8 +1,11 @@
-import { Request, Response } from 'express';
-import { USER_TYPES } from '../entities/User';
-import { prisma } from '../lib/prisma';
-import { sendNotificationEmail } from '../services/emailService';
-import { applyForServiceSchema, updateApplicationStatusSchema } from '../schemas/Application';
+import { Request, Response } from "express";
+import { USER_TYPES } from "../entities/User";
+import { prisma } from "../lib/prisma";
+import { sendNotificationEmail } from "../services/emailService";
+import {
+  applyForServiceSchema,
+  updateApplicationStatusSchema,
+} from "../schemas/Application";
 
 export class ApplicationController {
   static async updateApplicationStatus(req: Request, res: Response) {
@@ -13,11 +16,13 @@ export class ApplicationController {
     try {
       const result = updateApplicationStatusSchema.safeParse({ status });
 
-    if (!result.success) {
-      return res.status(400).json({ message: result.error.errors[0].message });
-    }
+      if (!result.success) {
+        return res
+          .status(400)
+          .json({ message: result.error.errors[0].message });
+      }
       const application = await prisma.application.findUnique({
-        where: { id: applicationId },
+        where: { id: applicationId, deletedAt: null },
         include: {
           Service: {
             select: {
@@ -31,26 +36,26 @@ export class ApplicationController {
       });
 
       if (!application) {
-        res.status(404).json({ message: 'Application not found' });
+        res.status(404).json({ message: "Application not found" });
         return;
       }
 
       // Verifica se o usuário é o criador do serviço ou backoffice
       if (
         application.Service.createdById !== requestUserId &&
-        requestUserType !== 'BACKOFFICE'
+        requestUserType !== "BACKOFFICE"
       ) {
         res
           .status(403)
-          .json({ message: 'Not authorized to update this application' });
+          .json({ message: "Not authorized to update this application" });
         return;
       }
 
-      if (status === 'Accepted') {
+      if (status === "Accepted") {
         await prisma.$transaction([
           // Atualiza o serviço para não aceitar mais aplicações
           prisma.service.update({
-            where: { id: application.Service.id },
+            where: { id: application.Service.id, deletedAt: null },
             data: {
               acceptApplications: false,
               updatedAt: new Date(),
@@ -61,15 +66,16 @@ export class ApplicationController {
             where: {
               serviceId: application.Service.id,
               id: { not: applicationId }, // Exclui a aplicação atual
-              status: { not: 'Rejected' }, // Atualiza apenas as que não estão rejeitadas
+              status: { not: "Rejected" }, // Atualiza apenas as que não estão rejeitadas
+              deletedAt: null,
             },
             data: {
-              status: 'Rejected',
+              status: "Rejected",
             },
           }),
           // Atualiza a aplicação atual
           prisma.application.update({
-            where: { id: applicationId },
+            where: { id: applicationId, deletedAt: null },
             data: { status },
             include: {
               Service: {
@@ -84,7 +90,7 @@ export class ApplicationController {
       } else {
         // Se não for Accepted, apenas atualiza a aplicação atual
         await prisma.application.update({
-          where: { id: applicationId },
+          where: { id: applicationId, deletedAt: null},
           data: { status },
           include: {
             Service: {
@@ -98,18 +104,18 @@ export class ApplicationController {
       }
 
       await sendNotificationEmail(
-        'isaacsvianna@gmail.com',
+        "isaacsvianna@gmail.com",
         status,
         application.Service.name
       );
       res.status(200).json({
-        message: 'Application status updated successfully',
+        message: "Application status updated successfully",
         status,
       });
       return;
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: "Internal server error" });
       return;
     }
   }
@@ -121,14 +127,16 @@ export class ApplicationController {
     try {
       const result = applyForServiceSchema.safeParse({ serviceId });
 
-    if (!result.success) {
-      return res.status(400).json({ message: result.error.errors[0].message });
-    }
+      if (!result.success) {
+        return res
+          .status(400)
+          .json({ message: result.error.errors[0].message });
+      }
       const service = await prisma.service.findFirst({
         where: {
           id: serviceId,
           isActive: true,
-          isDeleted: false,
+          deletedAt: null,
         },
         include: {
           User: true,
@@ -136,7 +144,7 @@ export class ApplicationController {
       });
 
       if (!service) {
-        res.status(404).json({ message: 'Service not found' });
+        res.status(404).json({ message: "Service not found" });
         return;
       }
 
@@ -144,12 +152,13 @@ export class ApplicationController {
         where: {
           id: userId,
           userType: USER_TYPES.PROFESSIONAL,
+          deletedAt: null,
         },
       });
 
       if (!applicant) {
         res.status(403).json({
-          message: 'Only professionals can apply for services',
+          message: "Only professionals can apply for services",
         });
         return;
       }
@@ -158,12 +167,13 @@ export class ApplicationController {
         where: {
           serviceId,
           applicantId: userId,
+          deletedAt: null,
         },
       });
 
       if (existingApplication) {
         res.status(400).json({
-          message: 'You have already applied for this service',
+          message: "You have already applied for this service",
         });
         return;
       }
@@ -173,7 +183,7 @@ export class ApplicationController {
           User: { connect: { id: userId } },
           updatedAt: new Date(),
           Service: { connect: { id: serviceId } },
-          status: 'Pending',
+          status: "Pending",
         },
         include: {
           Service: {
@@ -195,15 +205,15 @@ export class ApplicationController {
 
       await sendNotificationEmail(
         // service.User.email,
-        'isaacsvianna@gmail.com',
+        "isaacsvianna@gmail.com",
         `Nova aplicação para seu serviço: ${service.name}`,
         `O usuário ${applicant.name} solicitou seu serviço`
       );
 
-      res.status(201).json({ message: 'Application submitted successfully' });
+      res.status(201).json({ message: "Application submitted successfully" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 
@@ -213,11 +223,13 @@ export class ApplicationController {
     try {
       const result = applyForServiceSchema.safeParse({ serviceId });
 
-    if (!result.success) {
-      return res.status(400).json({ message: result.error.errors[0].message });
-    }
+      if (!result.success) {
+        return res
+          .status(400)
+          .json({ message: result.error.errors[0].message });
+      }
       const service = await prisma.service.findUnique({
-        where: { id: serviceId },
+        where: { id: serviceId, deletedAt: null },
         select: {
           id: true,
           name: true,
@@ -227,9 +239,9 @@ export class ApplicationController {
               id: true,
               appliedAt: true,
               status: true,
-              isDeleted: true,
               createdAt: true,
               updatedAt: true,
+              deletedAt: true,
               User: {
                 select: {
                   id: true,
@@ -244,14 +256,14 @@ export class ApplicationController {
       });
 
       if (!service) {
-        res.status(404).json({ message: 'Service not found' });
+        res.status(404).json({ message: "Service not found" });
         return;
       }
 
       res.status(200).json(service);
     } catch (error) {
-      console.error('Error fetching applications for service:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      console.error("Error fetching applications for service:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 }

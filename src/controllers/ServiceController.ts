@@ -13,17 +13,17 @@ export class ServiceController {
       }
 
       const service = await prisma.service.findUnique({
-        where: { id },
+        where: { id,deletedAt: null },
       });
 
-      if (!service || service.isDeleted) {
+      if (!service || service.deletedAt instanceof Date) {
         res.status(404).json({ message: "Service not found" });
         return;
       }
 
       await prisma.service.update({
-        where: { id },
-        data: { isDeleted: true },
+        where: { id,deletedAt: null },
+        data: { deletedAt: new Date() },
       });
 
       res.status(200).json({ message: "Service has been soft deleted" });
@@ -127,7 +127,7 @@ export class ServiceController {
       const services = await prisma.service.findMany({
         where: {
           isActive: true,
-          isDeleted: false,
+          deletedAt: null,
         },
         include: {
           CareCharacteristic: true,

@@ -39,7 +39,7 @@ class UserRepositoryClass {
     if (data.id) {
       const { id, ...updateData } = data;
       return await prisma.user.update({
-        where: { id },
+        where: { id ,deletedAt: null},
         data: updateData,
         include: {
           ProfessionalProfile: true,
@@ -53,7 +53,7 @@ class UserRepositoryClass {
 
   async update(id: string, data: Prisma.UserUpdateInput) {
     return await prisma.user.update({
-      where: { id },
+      where: { id,deletedAt: null },
       data,
      include: {
         ProfessionalProfile: true,
@@ -65,7 +65,7 @@ class UserRepositoryClass {
 
   async findByEmail(email: string) {
     return await prisma.user.findUnique({
-      where: { email },
+      where: { email,deletedAt: null },
      include: {
         ProfessionalProfile: true,
         Service: true,
@@ -78,7 +78,7 @@ class UserRepositoryClass {
     return await prisma.user.update({
       where: { id },
       data: {
-        isDeleted: true,
+        deletedAt: new Date(),
       },
     });
   }

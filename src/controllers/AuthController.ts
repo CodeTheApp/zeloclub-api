@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-
 import axios from "axios";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -13,10 +12,13 @@ import {
   sendPasswordResetEmail,
 } from "../services/emailService";
 import { validateEmail, validatePassword } from "../util/validates";
-import { logger } from '../lib/logger/winston';
-import { loginSchema, registerSchema, requestPasswordResetSchema, resetPasswordSchema } from "../schemas/User";
-
-
+import { logger } from "../lib/logger/winston";
+import {
+  loginSchema,
+  registerSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+} from "../schemas/User";
 
 export class AuthController {
   public static readonly requestPasswordReset = async (
@@ -28,18 +30,20 @@ export class AuthController {
     try {
       const validation = requestPasswordResetSchema.safeParse(req.body);
 
-    if (!validation.success) {
-      const errorMessage = validation.error.errors[0].message;
-      res.status(400).json({ message: errorMessage });
-      logger.warn("Request password reset validation failed", {
-        errors: validation.error.errors,
+      if (!validation.success) {
+        const errorMessage = validation.error.errors[0].message;
+        res.status(400).json({ message: errorMessage });
+        logger.warn("Request password reset validation failed", {
+          errors: validation.error.errors,
+        });
+        return;
+      }
+      const user = await prisma.user.findUnique({
+        where: { email, deletedAt: null },
       });
-      return;
-    }
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user || user.isDeleted) {
+      if (!user || user.deletedAt instanceof Date) {
         res.status(404).json({ message: "User not found or inactive" });
-      logger.info('Request password reset', { email });
+        logger.info("Request password reset", { email });
 
         return;
       }
@@ -50,7 +54,7 @@ export class AuthController {
         crypto.randomBytes(3).toString("hex");
 
       await prisma.user.update({
-        where: { id: user.id },
+        where: { id: user.id, deletedAt: null },
         data: {
           resetPasswordToken: token,
           resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
@@ -63,9 +67,8 @@ export class AuthController {
     } catch (error) {
       console.error(error);
 
-      logger.error('Error requesting password reset', { error });
-      res.status(500).json({ message: 'Internal server error' });
-
+      logger.error("Error requesting password reset", { error });
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -78,13 +81,14 @@ export class AuthController {
     try {
       const validation = resetPasswordSchema.safeParse(req.body);
 
-    if (!validation.success) {
-      const errorMessage = validation.error.errors[0].message;
-      res.status(400).json({ message: errorMessage });
-      return;
-    }
+      if (!validation.success) {
+        const errorMessage = validation.error.errors[0].message;
+        res.status(400).json({ message: errorMessage });
+        return;
+      }
       const user = await prisma.user.findFirst({
         where: {
+          deletedAt: null,
           resetPasswordToken: token,
           resetPasswordExpires: {
             gt: new Date(),
@@ -171,12 +175,12 @@ export class AuthController {
         description,
         gender
       );
-      logger.info('User registered', { email: email });
+      logger.info("User registered", { email: email });
 
-      res.status(201).json({ message: 'User registered successfully', user });
+      res.status(201).json({ message: "User registered successfully", user });
     } catch (error) {
       console.error(error);
-      logger.error('Error registering user', { error });
+      logger.error("Error registering user", { error });
       res.status(400).json({
         message: error instanceof Error ? error.message : "Unknown error",
       });
@@ -193,13 +197,13 @@ export class AuthController {
         return;
       }
       const { email, password } = req.body;
-      logger.info('Login user', { email: email });
+      logger.info("Login user", { email: email });
 
       const token = await AuthService.login(email, password);
       res.status(200).json({ message: "Login successful", token });
     } catch (error) {
       console.error(error);
-      logger.error('Error login', { error });
+      logger.error("Error login", { error });
       res.status(400).json({
         message: error instanceof Error ? error.message : "Unknown error",
       });
@@ -215,7 +219,7 @@ export class AuthController {
       const token = authHeader.split(" ")[1];
       const user = await AuthService.getUserFromToken(token);
       const result = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: user.id, deletedAt: null},
         select: {
           name: true,
           avatar: true,
@@ -231,7 +235,6 @@ export class AuthController {
               isValidated: true,
             },
           },
-          isDeleted: true,
         },
       });
       res.status(200).json({ result });
@@ -256,7 +259,7 @@ export class AuthController {
       const auth0User = userInfo.data;
 
       const user = await prisma.user.findUnique({
-        where: { email: auth0User.email },
+        where: { email: auth0User.email, deletedAt: null },
         select: {
           name: true,
           avatar: true,
@@ -266,7 +269,7 @@ export class AuthController {
           phoneNumber: true,
           description: true,
           ProfessionalProfile: true,
-          isDeleted: true,
+
           Application: true,
           Service: true,
         },

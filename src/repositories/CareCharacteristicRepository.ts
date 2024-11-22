@@ -14,14 +14,14 @@ class CareCharacteristicRepositoryClass {
     return await prisma.careCharacteristic.findMany({
       where: {
         ...where,
-        isDeleted: false, 
+        deletedAt: null, 
       },
       orderBy: {
         name: orderBy, 
       },
       include: {
         Service: {
-          where: { isActive: true, isDeleted: false }, 
+          where: { isActive: true, deletedAt: null }, 
           select: { id: true }, 
         },
       },
@@ -62,7 +62,7 @@ class CareCharacteristicRepositoryClass {
     return await prisma.careCharacteristic.update({
       where: { id },
       data: {
-        isDeleted: true,
+      
         deletedAt: new Date(),
       },
     });
@@ -70,7 +70,7 @@ class CareCharacteristicRepositoryClass {
 
   async findAllActiveCareCharacteristic() {
     return await prisma.careCharacteristic.findMany({
-      where: { isDeleted: false },
+      where: { deletedAt: null },
     });
   }
 }
