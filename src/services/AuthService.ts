@@ -85,7 +85,7 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    if (user.isDeleted) {
+    if (user.deletedAt instanceof Date) {
       throw new Error('User is not active anymore');
     }
 

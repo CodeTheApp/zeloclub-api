@@ -1,15 +1,15 @@
 // src/controllers/UserController.ts
-import bcrypt from "bcrypt";
-import { RequestHandler } from "express";
-import { USER_TYPES } from "../../types";
-import { prisma } from "../lib/prisma";
-import { sendPasswordResetEmail } from "../services/emailService";
-import { faker } from "@faker-js/faker";
-import { isUUID } from "validator";
-import { AuthenticatedRequest } from "../middlewares/authMiddleware";
-import path from "path";
-import { completeProfileSchema, createBackofficeUserSchema, createProfessionalSchema } from "../schemas/ProfessionalProfile";
-import { getAllBackofficeUsersSchema, getAllUsersSchema, getUserByIdSchema } from "../schemas/User";
+import bcrypt from 'bcrypt';
+import { RequestHandler } from 'express';
+import { USER_TYPES } from '../../types';
+import { prisma } from '../lib/prisma';
+import { sendPasswordResetEmail } from '../services/emailService';
+import { faker } from '@faker-js/faker';
+import { isUUID } from 'validator';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+import path from 'path';
+import { completeProfileSchema, createBackofficeUserSchema, createProfessionalSchema } from '../schemas/ProfessionalProfile';
+import { getAllBackofficeUsersSchema, getAllUsersSchema, getUserByIdSchema } from '../schemas/User';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (
@@ -33,15 +33,15 @@ export class UserController {
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
-      if (requestUser?.userType !== "Backoffice" && requestUser?.id !== id) {
+      if (requestUser?.userType !== 'Backoffice' && requestUser?.id !== id) {
         res
           .status(403)
           .json({
-            message: "Access denied. You can only update your own avatar.",
+            message: 'Access denied. You can only update your own avatar.',
           });
         return;
       }
@@ -55,15 +55,15 @@ export class UserController {
           },
         });
         res.status(200).json({
-          message: "Avatar uploaded successfully",
+          message: 'Avatar uploaded successfully',
           avatarUrl: newAvatarFilename,
         });
       } else {
-        res.status(400).json({ message: "No file uploaded" });
+        res.status(400).json({ message: 'No file uploaded' });
       }
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   };
 
@@ -79,7 +79,7 @@ export class UserController {
         },
       });
       if (!user || user.deletedAt instanceof Date) {
-        res.status(404).json({ message: "User not found or already deleted" });
+        res.status(404).json({ message: 'User not found or already deleted' });
         return;
       }
       const updateServices = prisma.service.updateMany({
@@ -102,11 +102,11 @@ export class UserController {
         .status(200)
         .json({
           message:
-            "User and associated services/applications have been soft deleted",
+            'User and associated services/applications have been soft deleted',
         });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   };
 
@@ -120,7 +120,7 @@ export class UserController {
 
       const result = createProfessionalSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        res.status(400).json({ message: 'Validation failed', errors: result.error.errors });
         return;
       }
       const {
@@ -157,12 +157,12 @@ export class UserController {
       });
 
       if (existingUser?.email === email) {
-        res.status(400).json({ message: "Email already in use" });
+        res.status(400).json({ message: 'Email already in use' });
         return;
       }
 
       if (existingUser?.phoneNumber === phoneNumber) {
-        res.status(400).json({ message: "Phone number already in use" });
+        res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
 
@@ -208,13 +208,13 @@ export class UserController {
       });
 
       res.status(201).json({
-        message: "Professional user created successfully",
+        message: 'Professional user created successfully',
         user,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -226,7 +226,7 @@ export class UserController {
     try {
       const result = createBackofficeUserSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        res.status(400).json({ message: 'Validation failed', errors: result.error.errors });
         return;
       }
       const { name, email, phoneNumber, avatar, description, gender } =
@@ -239,12 +239,12 @@ export class UserController {
       });
 
       if (existingUser?.email === email) {
-        res.status(400).json({ message: "Email already in use" });
+        res.status(400).json({ message: 'Email already in use' });
         return;
       }
 
       if (existingUser?.phoneNumber === phoneNumber) {
-        res.status(400).json({ message: "Phone number already in use" });
+        res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
 
@@ -252,7 +252,7 @@ export class UserController {
         length: 6,
         memorable: true,
         pattern: /[A-NP-Z1-9]/,
-      }); // '1-9 a-z retirando "O" e "0" pq sao parecidos'
+      }); // '1-9 a-z retirando 'O' e '0' pq sao parecidos'
       const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
       const user = await prisma.user.create({
@@ -270,7 +270,7 @@ export class UserController {
       });
 
       const token =
-        faker.string.alphanumeric(6) + "-" + faker.string.alphanumeric(6);
+        faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
 
       await prisma.user.update({
         where: { id: user.id ,deletedAt: null},
@@ -285,7 +285,7 @@ export class UserController {
 
       res.status(201).json({
         message:
-          "Backoffice user created successfully. A password reset email has been sent.",
+          'Backoffice user created successfully. A password reset email has been sent.',
         user: {
           id: user.id,
           name: user.name,
@@ -296,7 +296,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -311,7 +311,7 @@ export class UserController {
       
       const result = completeProfileSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+        res.status(400).json({ message: 'Validation failed', errors: result.error.errors });
         return;
       }
 
@@ -341,7 +341,7 @@ export class UserController {
         res
           .status(403)
           .json({
-            message: "Access denied. You can only update your own profile.",
+            message: 'Access denied. You can only update your own profile.',
           });
         return;
       }
@@ -352,14 +352,14 @@ export class UserController {
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
       if (user.userType === USER_TYPES.PROFESSIONAL) {
         if (!location || !specialty || !price || !available) {
           res.status(400).json({
             message:
-              "Missing required fields for Professional user: location, specialty, price, available.",
+              'Missing required fields for Professional user: location, specialty, price, available.',
           });
           return;
         }
@@ -416,13 +416,13 @@ export class UserController {
       });
 
       res.status(200).json({
-        message: "Profile completed successfully",
+        message: 'Profile completed successfully',
         user: updatedUser,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -453,7 +453,7 @@ export class UserController {
       });
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
@@ -461,7 +461,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -480,8 +480,8 @@ export class UserController {
       const {
         page = 1,
         pageSize = 10,
-        sortBy = "createdAt",
-        sortOrder = "asc",
+        sortBy = 'createdAt',
+        sortOrder = 'asc',
         ...filters
       } = req.query;
 
@@ -496,10 +496,10 @@ export class UserController {
       if (!isBackofficeUser) {
         whereConditions.deletedAt=== null;
       }
-      const orderBy: Record<string, "asc" | "desc"> = {};
-      if (typeof sortBy === "string") {
+      const orderBy: Record<string, 'asc' | 'desc'> = {};
+      if (typeof sortBy === 'string') {
         orderBy[sortBy] =
-          sortOrder === "asc" || sortOrder === "desc" ? sortOrder : "asc";
+          sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc';
       }
 
       const users = await prisma.user.findMany({
@@ -524,7 +524,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
@@ -547,11 +547,11 @@ export class UserController {
         deletedAt: null,
       };
       if (name) {
-        filters.name = { contains: name, mode: "insensitive" };
+        filters.name = { contains: name, mode: 'insensitive' };
       }
 
       if (email) {
-        filters.email = { contains: email, mode: "insensitive" };
+        filters.email = { contains: email, mode: 'insensitive' };
       }
 
       if (gender) {
@@ -588,7 +588,7 @@ export class UserController {
     } catch (error) {
       console.error(error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };

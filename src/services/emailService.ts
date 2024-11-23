@@ -126,11 +126,11 @@ export const sendEmailVerification = async (email: string) => {
     {
       email,
       data: {
-        title: "Verifique seu e-mail",
-        content: "<p>Olá,</p><p>Por favor, clique no botão abaixo para verificar seu endereço de e-mail e acessar os recursos do Zeloclub.</p>",
-        cta_text: "Verificar E-mail",
-        cta_link: "http://your-verification-link.com", // Link de verificação dinâmico
-        support_email: "contato@zeloclub.com.br",
+        title: 'Verifique seu e-mail',
+        content: '<p>Olá,</p><p>Por favor, clique no botão abaixo para verificar seu endereço de e-mail e acessar os recursos do Zeloclub.</p>',
+        cta_text: 'Verificar E-mail',
+        cta_link: 'http://your-verification-link.com', // Link de verificação dinâmico
+        support_email: 'contato@zeloclub.com.br',
       },
     },
   ];
@@ -159,11 +159,11 @@ export const sendTermsAcceptanceNotification = async (email: string) => {
     {
       email,
       data: {
-        title: "Aceite os Termos de Uso",
-        content: "<p>Olá,</p><p>Para continuar utilizando os recursos do Zeloclub, é necessário aceitar os nossos Termos de Uso. Clique no botão abaixo para aceitar.</p>",
-        cta_text: "Aceitar Termos",
-        cta_link: "http://your-terms-acceptance-link.com", // Link dinâmico para aceitação dos termos
-        support_email: "contato@zeloclub.com.br",
+        title: 'Aceite os Termos de Uso',
+        content: '<p>Olá,</p><p>Para continuar utilizando os recursos do Zeloclub, é necessário aceitar os nossos Termos de Uso. Clique no botão abaixo para aceitar.</p>',
+        cta_text: 'Aceitar Termos',
+        cta_link: 'http://your-terms-acceptance-link.com', // Link dinâmico para aceitação dos termos
+        support_email: 'contato@zeloclub.com.br',
       },
     },
   ];

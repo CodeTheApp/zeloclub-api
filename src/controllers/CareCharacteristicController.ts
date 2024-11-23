@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
-import { CareCharacteristicRepository } from "../repositories/CareCharacteristicRepository";
-import { DEFAULT_CARE_CHARACTERISTICS } from "../util/constants";
-import { ServiceRepository } from "../repositories/ServiceRepository";
+import { Request, Response } from 'express';
+import { CareCharacteristicRepository } from '../repositories/CareCharacteristicRepository';
+import { DEFAULT_CARE_CHARACTERISTICS } from '../util/constants';
+import { ServiceRepository } from '../repositories/ServiceRepository';
 import {
   createCareCharacteristicSchema,
   getAllCareCharacteristicsSchema,
   updateCareCharacteristicSchema,
-} from "../schemas/careCharacteristics";
+} from '../schemas/careCharacteristics';
 
 export class CareCharacteristicController {
   static async createCareCharacteristic(req: Request, res: Response) {
@@ -16,12 +16,12 @@ export class CareCharacteristicController {
 
       if (!validation.success) {
         const errors = validation.error.errors.map((err) => err.message);
-        res.status(400).json({ message: errors.join(", ") });
+        res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
       if (!description) {
-        res.status(400).json({ message: "Description is required" });
+        res.status(400).json({ message: 'Description is required' });
         return;
       }
       const existingCharacteristic = await CareCharacteristicRepository.findOne(
@@ -31,7 +31,7 @@ export class CareCharacteristicController {
       );
 
       if (existingCharacteristic) {
-        res.status(400).json({ message: "Characteristic already exists" });
+        res.status(400).json({ message: 'Characteristic already exists' });
         return;
       }
 
@@ -47,7 +47,7 @@ export class CareCharacteristicController {
       res.status(201).json(savedCharacteristic);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -59,24 +59,24 @@ export class CareCharacteristicController {
 
       if (!validation.success) {
         const errors = validation.error.errors.map((err) => err.message);
-        res.status(400).json({ message: errors.join(", ") });
+        res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
       const whereConditions: any = {};
       if (name) {
-        whereConditions.name = { contains: name, mode: "insensitive" };
+        whereConditions.name = { contains: name, mode: 'insensitive' };
       }
       if (description) {
         whereConditions.description = {
           contains: description,
-          mode: "insensitive",
+          mode: 'insensitive',
           deletedAt:null,
         };
       }
       const careCharacteristics = await CareCharacteristicRepository.find({
         where: whereConditions,
-        orderBy: orderByName === "desc" ? "desc" : "asc",
+        orderBy: orderByName === 'desc' ? 'desc' : 'asc',
         
       });
       const result = careCharacteristics.map((careCharacteristic) => ({
@@ -86,7 +86,7 @@ export class CareCharacteristicController {
       res.status(200).json(result);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -102,12 +102,12 @@ export class CareCharacteristicController {
 
       if (!validation.success) {
         const errors = validation.error.errors.map((err) => err.message);
-        res.status(400).json({ message: errors.join(", ") });
+        res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
       if (!description) {
-        res.status(400).json({ message: "Description is required" });
+        res.status(400).json({ message: 'Description is required' });
         return;
       }
 
@@ -122,12 +122,12 @@ export class CareCharacteristicController {
           });
 
         if (existingCharacteristic) {
-          res.status(400).json({ message: "Name already exists" });
+          res.status(400).json({ message: 'Name already exists' });
           return;
         }
       }
       if (!careCharacteristic) {
-        res.status(404).json({ message: "Characteristic not found" });
+        res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
 
@@ -165,7 +165,7 @@ export class CareCharacteristicController {
       res.status(200).json(updatedCharacteristic);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -175,13 +175,13 @@ export class CareCharacteristicController {
       const validation = createCareCharacteristicSchema.safeParse({ id });
       if (!validation.success) {
         const errors = validation.error.errors.map((err) => err.message);
-        res.status(400).json({ message: errors.join(", ") });
+        res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
       if (DEFAULT_CARE_CHARACTERISTICS.includes(id)) {
         res.status(400).json({
-          message: "Cannot delete default care characteristics.",
+          message: 'Cannot delete default care characteristics.',
         });
       }
       const careCharacteristic = await CareCharacteristicRepository.findOne({
@@ -199,21 +199,21 @@ export class CareCharacteristicController {
       if (activeServices.length > 0) {
         res.status(400).json({
           message:
-            "Cannot delete care characteristic because it is linked to active services.",
+            'Cannot delete care characteristic because it is linked to active services.',
         });
         return;
       }
 
       if (!careCharacteristic) {
-        res.status(404).json({ message: "Characteristic not found" });
+        res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
 
       await CareCharacteristicRepository.softDeleteCareCharacteristic(id);
-      res.status(200).json({ message: "Characteristic has been soft deleted" });
+      res.status(200).json({ message: 'Characteristic has been soft deleted' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 }
