@@ -40,11 +40,7 @@ router.delete(
 router.get('/', authenticate, UserController.getAllUsers);
 
 // Endpoint para completar o perfil de um usuário e transformá-lo em profissional
-router.patch(
-  '/:id/complete-profile',
-  authenticate,
-  UserController.completeProfile
-);
+router.patch('/:id/complete-profile', UserController.completeProfile);
 
 router.patch(
   '/:id/avatar',
