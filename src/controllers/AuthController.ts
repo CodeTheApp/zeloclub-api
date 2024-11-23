@@ -9,7 +9,6 @@ import {
   sendPasswordChanged,
   sendPasswordResetEmail,
 } from '../services/emailService';
-import { validateEmail, validatePassword } from '../util/validates';
 import { logger } from '../lib/logger/winston';
 import {
   loginSchema,
@@ -26,10 +25,10 @@ export class AuthController {
     res: Response
   ) => {
     const { email } = req.body;
-
+  
     try {
       const validation = requestPasswordResetSchema.safeParse(req.body);
-
+  
       if (!validation.success) {
         const errorMessage = validation.error.errors[0].message;
         res.status(400).json({ message: errorMessage });
@@ -38,28 +37,28 @@ export class AuthController {
         });
         return;
       }
-
+  
       const user = await prisma.user.findUnique({
         where: { email, deletedAt: null },
       });
-
+  
       if (!user || user.deletedAt instanceof Date) {
         res.status(404).json({ message: 'User not found or inactive' });
         logger.info('Request password reset', { email });
         return;
       }
-
+  
       const token =
         faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
-
+  
       await prisma.user.update({
         where: { id: user.id, deletedAt: null },
         data: {
           resetPasswordToken: token,
-          resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hora
+          resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hour
         },
       });
-
+  
       await sendPasswordResetEmail(user.email, token);
       res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
@@ -68,22 +67,23 @@ export class AuthController {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  
 
   public static readonly resetPassword = async (
     req: Request,
     res: Response
   ) => {
     const { token, newPassword } = req.body;
-
+  
     try {
       const validation = resetPasswordSchema.safeParse(req.body);
-
+  
       if (!validation.success) {
         const errorMessage = validation.error.errors[0].message;
         res.status(400).json({ message: errorMessage });
         return;
       }
-
+  
       const user = await prisma.user.findFirst({
         where: {
           deletedAt: null,
@@ -93,20 +93,13 @@ export class AuthController {
           },
         },
       });
-
+  
       if (!user) {
         res.status(400).json({ message: 'Invalid or expired token' });
         return;
       }
-
-      if (!validatePassword(newPassword)) {
-        res.status(400).json({
-          message:
-            'Password must be between 8-50 characters, including uppercase, lowercase, number, and special character (!@#$%^&*)',
-        });
-        return;
-      }
-
+  
+  
       await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -116,7 +109,7 @@ export class AuthController {
           updatedAt: new Date(),
         },
       });
-
+  
       await sendPasswordChanged(user.email);
       res.status(200).json({ message: 'Password has been reset successfully' });
     } catch (error) {
@@ -124,17 +117,18 @@ export class AuthController {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  
 
   public static readonly register = async (req: Request, res: Response) => {
     try {
       const validation = registerSchema.safeParse(req.body);
-
+  
       if (!validation.success) {
         const errorMessage = validation.error.errors[0].message;
         res.status(400).json({ message: errorMessage });
         return;
       }
-
+  
       const {
         name,
         email,
@@ -144,8 +138,7 @@ export class AuthController {
         description,
         gender,
       } = req.body;
-
-
+  
       const user = await AuthService.register(
         name,
         email,
@@ -155,9 +148,9 @@ export class AuthController {
         description,
         gender
       );
-
+  
       logger.info('User registered', { email: email });
-
+  
       res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
       console.error(error);
@@ -167,20 +160,20 @@ export class AuthController {
       });
     }
   };
-
+  
   public static readonly login = async (req: Request, res: Response) => {
     try {
       const validation = loginSchema.safeParse(req.body);
-
+  
       if (!validation.success) {
         const errorMessage = validation.error.errors[0].message;
         res.status(400).json({ message: errorMessage });
         return;
       }
-
+  
       const { email, password } = req.body;
       logger.info('Login user', { email: email });
-
+  
       const token = await AuthService.login(email, password);
       res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
@@ -191,6 +184,7 @@ export class AuthController {
       });
     }
   };
+  
 
   public static readonly me = async (req: Request, res: Response) => {
     try {

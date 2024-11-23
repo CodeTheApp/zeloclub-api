@@ -14,41 +14,41 @@ export class ServiceController {
         res.status(400).json({ message: result.error.errors[0].message });
         return;
       }
-
+  
       const service = await prisma.service.findUnique({
         where: { id, deletedAt: null },
       });
-
+  
       if (!service || service.deletedAt instanceof Date) {
         res.status(404).json({ message: 'Service not found' });
         return;
       }
-
+  
       await prisma.service.update({
         where: { id, deletedAt: null },
         data: { deletedAt: new Date() },
       });
-
+  
       res.status(200).json({ message: 'Service has been soft deleted' });
-
+  
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
-
+  
   static async createService(req: Request, res: Response) {
     try {
       const validation = createServiceSchema.safeParse(req.body);
-
+  
       if (!validation.success) {
         const errors = validation.error.errors.map((err) => err.message);
         res.status(400).json({ message: errors.join(', ') });
         return;
       }
-
+  
       const DEFAULT_CARE_ID = 'a1b2c3d4-5e6f-7g8h-9i10-j11k12l13m14';
-
+  
       const { 
         name, 
         description, 
@@ -59,42 +59,28 @@ export class ServiceController {
         contactPhone, 
         careCharacteristics 
       } = req.body;
-
-      if (!name || !description || !careCharacteristics) {
-        res.status(400).json({
-          message: 'Name, description, and careCharacteristics are required',
-        });
-        return;
-      }
-
-      if (!Array.isArray(careCharacteristics) || careCharacteristics.length === 0) {
-        res.status(400).json({
-          message: 'At least one care characteristic is required',
-        });
-        return;
-      }
-
+  
       const user = await prisma.user.findUnique({
         where: { id: (req as any).user.id },
       });
-
+  
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
       }
-
+  
       const characteristics = await prisma.careCharacteristic.findMany({
         where: {
           name: { in: careCharacteristics },
         },
       });
-
+  
       const characteristicIds = characteristics.map((char) => char.id);
       
       if (!characteristicIds.includes(DEFAULT_CARE_ID)) {
         characteristicIds.push(DEFAULT_CARE_ID);
       }
-
+  
       const service = await prisma.service.create({
         data: {
           updatedAt: new Date(),
@@ -115,14 +101,15 @@ export class ServiceController {
           User: true,
         },
       });
-
+  
       res.status(201).json(service);
-
+  
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+  
 
   static async getAllServices(req: Request, res: Response) {
     try {

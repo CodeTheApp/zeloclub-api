@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const createProfessionalSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters long'),
+  name: z
+    .string()
+    .min(3, 'Name must be at least 3 characters long')
+    .trim()
+    .transform((val) => val.charAt(0).toUpperCase() + val.slice(1)),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
   phoneNumber: z.string().min(10, 'Phone number must be at least 10 characters long'),
@@ -47,7 +51,11 @@ export const createProfessionalSchema = z.object({
 });
 
 export const createBackofficeUserSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .trim()
+    .transform((val) => val.charAt(0).toUpperCase() + val.slice(1)),
   email: z.string().email('Invalid email format'),
   phoneNumber: z.string().min(10, 'Phone number must be at least 10 characters long'),
   avatar: z.string().optional(),

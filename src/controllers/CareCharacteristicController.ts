@@ -10,20 +10,16 @@ import {
 
 export class CareCharacteristicController {
   static async createCareCharacteristic(req: Request, res: Response) {
-    const { name, description } = req.body;
     try {
-      const validation = createCareCharacteristicSchema.safeParse(req.body);
-
-      if (!validation.success) {
-        const errors = validation.error.errors.map((err) => err.message);
+      const validationData = createCareCharacteristicSchema.safeParse(req.body);
+      const { name, description } = validationData.data ?? {};
+      if (!validationData.success) {
+        const errors = validationData.error.errors.map((err) => err.message);
         res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
-      if (!description) {
-        res.status(400).json({ message: 'Description is required' });
-        return;
-      }
+  
       const existingCharacteristic = await CareCharacteristicRepository.findOne(
         {
           where: { name },
@@ -37,8 +33,8 @@ export class CareCharacteristicController {
 
       const careCharacteristic = CareCharacteristicRepository.create({
         updatedAt: new Date(),
-        name,
-        description,
+        name: name ?? '',
+        description: description?? '',
       });
 
       const savedCharacteristic = await CareCharacteristicRepository.save(
@@ -53,12 +49,15 @@ export class CareCharacteristicController {
 
   //GET /care-characteristics?name=teste&description=teste&orderByName=desc
   static async getAllCareCharacteristics(req: Request, res: Response) {
-    const { name, description, orderByName } = req.query;
     try {
-      const validation = getAllCareCharacteristicsSchema.safeParse(req.query);
+      const validationData = getAllCareCharacteristicsSchema.safeParse(
+        req.query
+      );
 
-      if (!validation.success) {
-        const errors = validation.error.errors.map((err) => err.message);
+      const { name, description, orderByName } = validationData.data ?? {};
+
+      if (!validationData.success) {
+        const errors = validationData.error.errors.map((err) => err.message);
         res.status(400).json({ message: errors.join(', ') });
         return;
       }
@@ -71,13 +70,12 @@ export class CareCharacteristicController {
         whereConditions.description = {
           contains: description,
           mode: 'insensitive',
-          deletedAt:null,
+          deletedAt: null,
         };
       }
       const careCharacteristics = await CareCharacteristicRepository.find({
         where: whereConditions,
         orderBy: orderByName === 'desc' ? 'desc' : 'asc',
-        
       });
       const result = careCharacteristics.map((careCharacteristic) => ({
         ...careCharacteristic,
@@ -94,31 +92,35 @@ export class CareCharacteristicController {
     const { id } = req.params;
     const { name, description } = req.body;
     try {
-      const validation = updateCareCharacteristicSchema.safeParse({
+      const validationData = updateCareCharacteristicSchema.safeParse({
         id,
         name,
         description,
       });
 
-      if (!validation.success) {
-        const errors = validation.error.errors.map((err) => err.message);
+      if (!validationData.success) {
+        const errors = validationData.error.errors.map((err) => err.message);
         res.status(400).json({ message: errors.join(', ') });
         return;
       }
 
-      if (!description) {
-        res.status(400).json({ message: 'Description is required' });
+      const { name: validatedName, description: validatedDescription } =
+        validationData.data;
+
+
+      const careCharacteristic = await CareCharacteristicRepository.findOne({
+        where: { id, deletedAt: null },
+      });
+
+      if (!careCharacteristic) {
+        res.status(404).json({ message: 'Characteristic not found' });
         return;
       }
 
-      const careCharacteristic = await CareCharacteristicRepository.findOne({
-        where: { id, deletedAt: null  },
-      });
-
-      if (name && name !== careCharacteristic?.name) {
+      if (validatedName && validatedName !== careCharacteristic.name) {
         const existingCharacteristic =
           await CareCharacteristicRepository.findOne({
-            where: { name, deletedAt: null },
+            where: { name: validatedName, deletedAt: null },
           });
 
         if (existingCharacteristic) {
@@ -126,16 +128,12 @@ export class CareCharacteristicController {
           return;
         }
       }
-      if (!careCharacteristic) {
-        res.status(404).json({ message: 'Characteristic not found' });
-        return;
-      }
 
       const updatedCharacteristic = await CareCharacteristicRepository.update(
         id,
         {
-          name: name || careCharacteristic.name,
-          description,
+          name: validatedName || careCharacteristic.name,
+          description: validatedDescription,
           updatedAt: new Date(),
         }
       );

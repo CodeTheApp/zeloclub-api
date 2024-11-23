@@ -83,9 +83,6 @@ export const sendNotificationEmail = async (
     console.error('Error sending notification email:', error);
     throw new Error('Failed to send notification email');
   }
-
-
-
   
 };
 export const sendPasswordChanged = async (email: string) => {
