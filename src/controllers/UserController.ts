@@ -1,15 +1,22 @@
 // src/controllers/UserController.ts
+import { faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 import { RequestHandler } from 'express';
+import path from 'path';
 import { USER_TYPES } from '../../types';
 import { prisma } from '../lib/prisma';
-import { sendPasswordResetEmail } from '../services/emailService';
-import { faker } from '@faker-js/faker';
-import { isUUID } from 'validator';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-import path from 'path';
-import { completeProfileSchema, createBackofficeUserSchema, createProfessionalSchema } from '../schemas/ProfessionalProfile';
-import { getAllBackofficeUsersSchema, getAllUsersSchema, getUserByIdSchema } from '../schemas/User';
+import {
+  completeProfileSchema,
+  createBackofficeUserSchema,
+  createProfessionalSchema,
+} from '../schemas/ProfessionalProfile';
+import {
+  getAllBackofficeUsersSchema,
+  getAllUsersSchema,
+  getUserByIdSchema,
+} from '../schemas/User';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 export class UserController {
   public static readonly uploadAvatar: RequestHandler = async (
@@ -29,7 +36,7 @@ export class UserController {
 
     try {
       const user = await prisma.user.findUnique({
-        where: { id ,deletedAt: null},
+        where: { id, deletedAt: null },
       });
 
       if (!user) {
@@ -38,17 +45,15 @@ export class UserController {
       }
 
       if (requestUser?.userType !== 'Backoffice' && requestUser?.id !== id) {
-        res
-          .status(403)
-          .json({
-            message: 'Access denied. You can only update your own avatar.',
-          });
+        res.status(403).json({
+          message: 'Access denied. You can only update your own avatar.',
+        });
         return;
       }
       if (req.file) {
         const newAvatarFilename = formatAvatarFilename(id, req.file);
         const updatedUser = await prisma.user.update({
-          where: { id ,deletedAt: null},
+          where: { id, deletedAt: null },
           data: {
             avatar: newAvatarFilename,
             updatedAt: new Date(),
@@ -71,7 +76,7 @@ export class UserController {
     const { id } = req.params;
     try {
       const user = await prisma.user.findUnique({
-        where: { id,deletedAt: null },
+        where: { id, deletedAt: null },
         include: {
           Service: true,
           Application: true,
@@ -84,7 +89,7 @@ export class UserController {
       }
       const updateServices = prisma.service.updateMany({
         where: { User: { id: id } },
-        data: {deletedAt: new Date()},
+        data: { deletedAt: new Date() },
       });
       const updateApplications = prisma.application.updateMany({
         where: { User: { id: id } },
@@ -98,12 +103,10 @@ export class UserController {
         },
       });
       await Promise.all([updateServices, updateApplications, updateUser]);
-      res
-        .status(200)
-        .json({
-          message:
-            'User and associated services/applications have been soft deleted',
-        });
+      res.status(200).json({
+        message:
+          'User and associated services/applications have been soft deleted',
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
@@ -112,14 +115,19 @@ export class UserController {
 
   // src/controllers/UserController.ts (continuação)
 
-  public static readonly createProfessional: RequestHandler = async (req, res) => {
+  public static readonly createProfessional: RequestHandler = async (
+    req,
+    res
+  ) => {
     try {
       const result = createProfessionalSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).json({ message: 'Validation failed', errors: result.error.errors });
+        res
+          .status(400)
+          .json({ message: 'Validation failed', errors: result.error.errors });
         return;
       }
-  
+
       const {
         name,
         email,
@@ -145,26 +153,26 @@ export class UserController {
         schedule,
         reviewsList,
       } = req.body;
-  
+
       const existingUser = await prisma.user.findFirst({
         where: {
           deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
-  
+
       if (existingUser?.email === email) {
         res.status(400).json({ message: 'Email already in use' });
         return;
       }
-  
+
       if (existingUser?.phoneNumber === phoneNumber) {
         res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
-  
+
       const hashedPassword = await bcrypt.hash(password, 10);
-  
+
       const user = await prisma.user.create({
         data: {
           updatedAt: new Date(),
@@ -201,7 +209,7 @@ export class UserController {
           ProfessionalProfile: true,
         },
       });
-  
+
       res.status(201).json({
         message: 'Professional user created successfully',
         user,
@@ -213,43 +221,48 @@ export class UserController {
       });
     }
   };
-  
 
-  public static readonly createBackofficeUser: RequestHandler = async (req, res) => {
+  public static readonly createBackofficeUser: RequestHandler = async (
+    req,
+    res
+  ) => {
     try {
       const result = createBackofficeUserSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).json({ message: 'Validation failed', errors: result.error.errors });
+        res
+          .status(400)
+          .json({ message: 'Validation failed', errors: result.error.errors });
         return;
       }
-  
-      const { name, email, phoneNumber, avatar, description, gender } = req.body;
-  
+
+      const { name, email, phoneNumber, avatar, description, gender } =
+        req.body;
+
       const existingUser = await prisma.user.findFirst({
         where: {
           deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
-  
+
       if (existingUser?.email === email) {
         res.status(400).json({ message: 'Email already in use' });
         return;
       }
-  
+
       if (existingUser?.phoneNumber === phoneNumber) {
         res.status(400).json({ message: 'Phone number already in use' });
         return;
       }
-  
+
       const temporaryPassword = faker.internet.password({
         length: 6,
         memorable: true,
         pattern: /[A-NP-Z1-9]/, // Excludes 'O' and '0' due to similarity
       });
-  
+
       const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-  
+
       const user = await prisma.user.create({
         data: {
           updatedAt: new Date(),
@@ -263,9 +276,10 @@ export class UserController {
           userType: USER_TYPES.BACKOFFICE,
         },
       });
-  
-      const token = faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
-  
+
+      const token =
+        faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
+
       await prisma.user.update({
         where: { id: user.id, deletedAt: null },
         data: {
@@ -273,11 +287,12 @@ export class UserController {
           resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hour
         },
       });
-  
+
       await sendPasswordResetEmail(email, token);
-  
+
       res.status(201).json({
-        message: 'Backoffice user created successfully. A password reset email has been sent.',
+        message:
+          'Backoffice user created successfully. A password reset email has been sent.',
         user: {
           id: user.id,
           name: user.name,
@@ -292,7 +307,6 @@ export class UserController {
       });
     }
   };
-  
 
   public static readonly completeProfile: RequestHandler = async (
     req: AuthenticatedRequest,
@@ -300,45 +314,43 @@ export class UserController {
   ) => {
     try {
       const { id } = req.params;
-      const requestUser = req.user;
-  
+
       const validation = completeProfileSchema.safeParse(req.body);
       if (!validation.success) {
-        res.status(400).json({ message: 'Validation failed', errors: validation.error.errors });
-        return;
-      }
-  
-      const data = validation.data;
-  
-      if (
-        requestUser?.userType !== USER_TYPES.BACKOFFICE &&
-        requestUser?.id !== id
-      ) {
-        res.status(403).json({
-          message: 'Access denied. You can only update your own profile.',
+        res.status(400).json({
+          message: 'Validation failed',
+          errors: validation.error.errors,
         });
         return;
       }
-  
+
+      const data = validation.data;
+
       const user = await prisma.user.findUnique({
         where: { id, deletedAt: null },
         include: { ProfessionalProfile: true },
       });
-  
+
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
       }
-  
+
       if (user.userType === USER_TYPES.PROFESSIONAL) {
-        if (!data.location || !data.specialty || !data.price || data.available === undefined) {
+        if (
+          !data.location ||
+          !data.specialty ||
+          !data.price ||
+          data.available === undefined
+        ) {
           res.status(400).json({
-            message: 'Missing required fields for Professional user: location, specialty, price, available.',
+            message:
+              'Missing required fields for Professional user: location, specialty, price, available.',
           });
           return;
         }
       }
-  
+
       const updatedUser = await prisma.user.update({
         where: { id, deletedAt: null },
         data: {
@@ -389,7 +401,7 @@ export class UserController {
           ProfessionalProfile: true,
         },
       });
-  
+
       res.status(200).json({
         message: 'Profile completed successfully',
         user: updatedUser,
@@ -400,18 +412,17 @@ export class UserController {
       });
     }
   };
-  
 
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
       const { id } = req.params;
-  
+
       const validation = getUserByIdSchema.safeParse({ id });
       if (!validation.success) {
         res.status(400).json({ message: validation.error.errors[0].message });
         return;
       }
-  
+
       const user = await prisma.user.findUnique({
         where: { id, deletedAt: null },
         select: {
@@ -426,12 +437,12 @@ export class UserController {
           ProfessionalProfile: true,
         },
       });
-  
+
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
       }
-  
+
       res.status(200).json({ user });
     } catch (error) {
       res.status(500).json({
@@ -439,7 +450,6 @@ export class UserController {
       });
     }
   };
-  
 
   //GET /users?page=1&pageSize=5&sortBy=name&sortOrder=desc&userType=Admin&gender=Male
   public static readonly getAllUsers: RequestHandler = async (
@@ -452,7 +462,7 @@ export class UserController {
         res.status(400).json({ message: validation.error.errors[0].message });
         return;
       }
-  
+
       const {
         page = 1,
         pageSize = 10,
@@ -460,22 +470,23 @@ export class UserController {
         sortOrder = 'asc',
         ...filters
       } = validation.data;
-  
+
       const pageNumber = Number(page);
       const pageSizeNumber = Number(pageSize);
       const skip = (pageNumber - 1) * pageSizeNumber;
       const requestUser = req.user;
       const isBackofficeUser = requestUser?.userType === USER_TYPES.BACKOFFICE;
-  
+
       const whereConditions: Record<string, any> = { ...filters };
       if (!isBackofficeUser) {
         whereConditions.deletedAt = null;
       }
-  
+
       const orderBy: Record<string, 'asc' | 'desc'> = {
-        [sortBy]: sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc',
+        [sortBy]:
+          sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc',
       };
-  
+
       const users = await prisma.user.findMany({
         where: whereConditions,
         select: {
@@ -493,7 +504,7 @@ export class UserController {
         take: pageSizeNumber,
         orderBy,
       });
-  
+
       res.status(200).json({ users });
     } catch (error) {
       res.status(500).json({
@@ -501,7 +512,6 @@ export class UserController {
       });
     }
   };
-  
 
   //GET /backoffice-users?name=Jane&email=@example.com&gender=Female&page=1&limit=10
   public static readonly getAllBackofficeUsers: RequestHandler = async (
@@ -514,28 +524,28 @@ export class UserController {
         res.status(400).json({ message: validation.error.errors[0].message });
         return;
       }
-  
+
       const { name, email, gender, page = 1, limit = 10 } = validation.data;
-  
+
       const filters: Record<string, any> = {
         userType: USER_TYPES.BACKOFFICE,
         deletedAt: null,
       };
-  
+
       if (name) {
         filters.name = { contains: name, mode: 'insensitive' };
       }
-  
+
       if (email) {
         filters.email = { contains: email, mode: 'insensitive' };
       }
-  
+
       if (gender) {
         filters.gender = gender;
       }
-  
+
       const skip = (Number(page) - 1) * Number(limit);
-  
+
       const users = await prisma.user.findMany({
         where: filters,
         skip,
@@ -554,9 +564,9 @@ export class UserController {
           Application: true,
         },
       });
-  
+
       const totalUsers = await prisma.user.count({ where: filters });
-  
+
       res.status(200).json({
         users,
         pagination: {
@@ -571,4 +581,4 @@ export class UserController {
       });
     }
   };
-}  
+}
