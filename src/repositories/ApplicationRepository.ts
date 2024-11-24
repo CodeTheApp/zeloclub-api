@@ -37,7 +37,7 @@ class ApplicationRepositoryClass {
     if (data.id) {
       const { id, ...updateData } = data;
       return await prisma.application.update({
-        where: { id },
+        where: { id,deletedAt: null },
         data: updateData,
         include: {
           User:true,
@@ -50,7 +50,7 @@ class ApplicationRepositoryClass {
 
   async update(id: string, data: Prisma.ApplicationUpdateInput) {
     return await prisma.application.update({
-      where: { id },
+      where: { id,deletedAt: null },
       data,
       include: {
         User:true,
@@ -63,7 +63,7 @@ class ApplicationRepositoryClass {
     return await prisma.application.update({
       where: { id },
       data: {
-        isDeleted: true,
+        deletedAt: new Date(),
       },
     });
   }

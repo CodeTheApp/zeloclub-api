@@ -16,7 +16,6 @@ router.post(
 // Rota para listar todas as características de cuidado
 router.get(
   '/',
-  authenticate,
   CareCharacteristicController.getAllCareCharacteristics
 );
 

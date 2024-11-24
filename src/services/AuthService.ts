@@ -55,8 +55,8 @@ export class AuthService {
               rating: 0,
               reviews: 0,
               available: true,
-              isPremium: false,
-              validated: false,
+              isCompleted: false,
+              isValidated: false,
               address: {},
               certifications: [],
               contacts: {},
@@ -85,7 +85,7 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    if (user.isDeleted) {
+    if (user.deletedAt instanceof Date) {
       throw new Error('User is not active anymore');
     }
 

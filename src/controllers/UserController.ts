@@ -1,16 +1,42 @@
 // src/controllers/UserController.ts
+import { faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 import { RequestHandler } from 'express';
+import path from 'path';
 import { USER_TYPES } from '../../types';
 import { prisma } from '../lib/prisma';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+import {
+  completeProfileSchema,
+  createBackofficeUserSchema,
+  createProfessionalSchema,
+} from '../schemas/ProfessionalProfile';
+import {
+  getAllBackofficeUsersSchema,
+  getAllUsersSchema,
+  getUserByIdSchema,
+} from '../schemas/User';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 export class UserController {
-  public static readonly uploadAvatar: RequestHandler = async (req, res) => {
+  public static readonly uploadAvatar: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
+    const formatAvatarFilename = (
+      userId: string,
+      file: Express.Multer.File
+    ): string => {
+      const timestamp = Date.now();
+      const extension = path.extname(file.originalname).toLowerCase();
+      return `avatar_${userId}_${timestamp}${extension}`;
+    };
     const { id } = req.params;
+    const requestUser = req.user;
 
     try {
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id, deletedAt: null },
       });
 
       if (!user) {
@@ -18,17 +44,24 @@ export class UserController {
         return;
       }
 
-      if (req.file && (req.file as any).location) {
-        await prisma.user.update({
-          where: { id },
+      if (requestUser?.userType !== 'Backoffice' && requestUser?.id !== id) {
+        res.status(403).json({
+          message: 'Access denied. You can only update your own avatar.',
+        });
+        return;
+      }
+      if (req.file) {
+        const newAvatarFilename = formatAvatarFilename(id, req.file);
+        const updatedUser = await prisma.user.update({
+          where: { id, deletedAt: null },
           data: {
-            avatar: (req.file as any).location,
+            avatar: newAvatarFilename,
+            updatedAt: new Date(),
           },
         });
-
         res.status(200).json({
           message: 'Avatar uploaded successfully',
-          avatarUrl: (req.file as any).location,
+          avatarUrl: newAvatarFilename,
         });
       } else {
         res.status(400).json({ message: 'No file uploaded' });
@@ -41,23 +74,39 @@ export class UserController {
 
   public static readonly deleteUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
-
     try {
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id, deletedAt: null },
+        include: {
+          Service: true,
+          Application: true,
+          ProfessionalProfile: true,
+        },
       });
-
-      if (!user || user.isDeleted) {
-        res.status(404).json({ message: 'User not found' });
+      if (!user || user.deletedAt instanceof Date) {
+        res.status(404).json({ message: 'User not found or already deleted' });
         return;
       }
-
-      await prisma.user.update({
-        where: { id },
-        data: { isDeleted: true },
+      const updateServices = prisma.service.updateMany({
+        where: { User: { id: id } },
+        data: { deletedAt: new Date() },
       });
-
-      res.status(200).json({ message: 'User has been soft deleted' });
+      const updateApplications = prisma.application.updateMany({
+        where: { User: { id: id } },
+        data: { deletedAt: new Date() },
+      });
+      const updateUser = prisma.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      await Promise.all([updateServices, updateApplications, updateUser]);
+      res.status(200).json({
+        message:
+          'User and associated services/applications have been soft deleted',
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
@@ -71,6 +120,14 @@ export class UserController {
     res
   ) => {
     try {
+      const result = createProfessionalSchema.safeParse(req.body);
+      if (!result.success) {
+        res
+          .status(400)
+          .json({ message: 'Validation failed', errors: result.error.errors });
+        return;
+      }
+
       const {
         name,
         email,
@@ -86,8 +143,8 @@ export class UserController {
         price,
         reviews,
         available,
-        isPremium,
-        validated,
+        isCompleted,
+        isValidated,
         address,
         certifications,
         contacts,
@@ -97,9 +154,9 @@ export class UserController {
         reviewsList,
       } = req.body;
 
-      // Verifica se o email ou número de telefone já existem
       const existingUser = await prisma.user.findFirst({
         where: {
+          deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
@@ -114,13 +171,11 @@ export class UserController {
         return;
       }
 
-      // Criptografa a senha
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Cria o usuário com o perfil profissional em uma única transação
       const user = await prisma.user.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           email,
           password: hashedPassword,
@@ -138,8 +193,8 @@ export class UserController {
               price,
               reviews: reviews || 0,
               available,
-              isPremium,
-              validated,
+              isCompleted,
+              isValidated,
               address,
               certifications,
               contacts,
@@ -172,18 +227,20 @@ export class UserController {
     res
   ) => {
     try {
-      const {
-        name,
-        email,
-        password,
-        phoneNumber,
-        avatar,
-        description,
-        gender,
-      } = req.body;
+      const result = createBackofficeUserSchema.safeParse(req.body);
+      if (!result.success) {
+        res
+          .status(400)
+          .json({ message: 'Validation failed', errors: result.error.errors });
+        return;
+      }
+
+      const { name, email, phoneNumber, avatar, description, gender } =
+        req.body;
 
       const existingUser = await prisma.user.findFirst({
         where: {
+          deletedAt: null,
           OR: [{ email }, { phoneNumber }],
         },
       });
@@ -198,11 +255,17 @@ export class UserController {
         return;
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const temporaryPassword = faker.internet.password({
+        length: 6,
+        memorable: true,
+        pattern: /[A-NP-Z1-9]/, // Excludes 'O' and '0' due to similarity
+      });
+
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
       const user = await prisma.user.create({
         data: {
-          updatedAt: new Date,
+          updatedAt: new Date(),
           name,
           email,
           password: hashedPassword,
@@ -214,9 +277,28 @@ export class UserController {
         },
       });
 
+      const token =
+        faker.string.alphanumeric(6) + '-' + faker.string.alphanumeric(6);
+
+      await prisma.user.update({
+        where: { id: user.id, deletedAt: null },
+        data: {
+          resetPasswordToken: token,
+          resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hour
+        },
+      });
+
+      await sendPasswordResetEmail(email, token);
+
       res.status(201).json({
-        message: 'Backoffice user created successfully',
-        user,
+        message:
+          'Backoffice user created successfully. A password reset email has been sent.',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+        },
       });
     } catch (error) {
       console.error(error);
@@ -226,30 +308,26 @@ export class UserController {
     }
   };
 
-  public static readonly completeProfile: RequestHandler = async (req, res) => {
+  public static readonly completeProfile: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
     try {
       const { id } = req.params;
-      const {
-        location,
-        specialty,
-        experience,
-        rating,
-        price,
-        reviews,
-        available,
-        isPremium,
-        validated,
-        address,
-        certifications,
-        contacts,
-        social,
-        services,
-        schedule,
-        reviewsList,
-      } = req.body;
+
+      const validation = completeProfileSchema.safeParse(req.body);
+      if (!validation.success) {
+        res.status(400).json({
+          message: 'Validation failed',
+          errors: validation.error.errors,
+        });
+        return;
+      }
+
+      const data = validation.data;
 
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id, deletedAt: null },
         include: { ProfessionalProfile: true },
       });
 
@@ -258,47 +336,63 @@ export class UserController {
         return;
       }
 
+      if (user.userType === USER_TYPES.PROFESSIONAL) {
+        if (
+          !data.location ||
+          !data.specialty ||
+          !data.price ||
+          data.available === undefined
+        ) {
+          res.status(400).json({
+            message:
+              'Missing required fields for Professional user: location, specialty, price, available.',
+          });
+          return;
+        }
+      }
+
       const updatedUser = await prisma.user.update({
-        where: { id },
+        where: { id, deletedAt: null },
         data: {
+          updatedAt: new Date(),
           userType: USER_TYPES.PROFESSIONAL,
           ProfessionalProfile: {
             upsert: {
               create: {
-                location,
-                specialty,
-                experience,
-                rating: rating || 0,
-                price,
-                reviews: reviews || 0,
-                available,
-                isPremium,
-                validated,
-                address,
-                certifications,
-                contacts,
-                social,
-                services,
-                schedule,
-                reviewsList,
+                location: data.location,
+                specialty: data.specialty,
+                experience: String(data.experience || ''),
+                rating: data.rating || 0,
+                price: data.price,
+                reviews: data.reviews || 0,
+                available: data.available,
+                isCompleted: true,
+                isValidated: data.isValidated,
+                address: data.address || {},
+                certifications: data.certifications || [],
+                contacts: data.contacts || {},
+                social: data.social || {},
+                services: data.services || [],
+                schedule: data.schedule || [],
+                reviewsList: data.reviewsList || [],
               },
               update: {
-                location,
-                specialty,
-                experience,
-                rating: rating || 0,
-                price,
-                reviews: reviews || 0,
-                available,
-                isPremium,
-                validated,
-                address,
-                certifications,
-                contacts,
-                social,
-                services,
-                schedule,
-                reviewsList,
+                location: data.location,
+                specialty: data.specialty,
+                experience: String(data.experience || ''),
+                rating: data.rating || 0,
+                price: data.price,
+                reviews: data.reviews || 0,
+                available: data.available,
+                isCompleted: true,
+                isValidated: data.isValidated,
+                address: data.address || {},
+                certifications: data.certifications || [],
+                contacts: data.contacts || {},
+                social: data.social || {},
+                services: data.services || [],
+                schedule: data.schedule || [],
+                reviewsList: data.reviewsList || [],
               },
             },
           },
@@ -313,7 +407,6 @@ export class UserController {
         user: updatedUser,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -323,9 +416,26 @@ export class UserController {
   public static readonly getUserById: RequestHandler = async (req, res) => {
     try {
       const { id } = req.params;
+
+      const validation = getUserByIdSchema.safeParse({ id });
+      if (!validation.success) {
+        res.status(400).json({ message: validation.error.errors[0].message });
+        return;
+      }
+
       const user = await prisma.user.findUnique({
-        where: { id },
-        include: { ProfessionalProfile: true },
+        where: { id, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          gender: true,
+          ProfessionalProfile: true,
+        },
       });
 
       if (!user) {
@@ -335,44 +445,137 @@ export class UserController {
 
       res.status(200).json({ user });
     } catch (error) {
-      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
 
-  public static readonly getAllUsers: RequestHandler = async (req, res) => {
+  //GET /users?page=1&pageSize=5&sortBy=name&sortOrder=desc&userType=Admin&gender=Male
+  public static readonly getAllUsers: RequestHandler = async (
+    req: AuthenticatedRequest,
+    res
+  ) => {
     try {
+      const validation = getAllUsersSchema.safeParse(req.query);
+      if (!validation.success) {
+        res.status(400).json({ message: validation.error.errors[0].message });
+        return;
+      }
+
+      const {
+        page = 1,
+        pageSize = 10,
+        sortBy = 'createdAt',
+        sortOrder = 'asc',
+        ...filters
+      } = validation.data;
+
+      const pageNumber = Number(page);
+      const pageSizeNumber = Number(pageSize);
+      const skip = (pageNumber - 1) * pageSizeNumber;
+      const requestUser = req.user;
+      const isBackofficeUser = requestUser?.userType === USER_TYPES.BACKOFFICE;
+
+      const whereConditions: Record<string, any> = { ...filters };
+      if (!isBackofficeUser) {
+        whereConditions.deletedAt = null;
+      }
+
+      const orderBy: Record<string, 'asc' | 'desc'> = {
+        [sortBy]:
+          sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc',
+      };
+
       const users = await prisma.user.findMany({
-        where: { isDeleted: false },
-        include: { ProfessionalProfile: true },
+        where: whereConditions,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          gender: true,
+          ProfessionalProfile: true,
+        },
+        skip,
+        take: pageSizeNumber,
+        orderBy,
       });
 
       res.status(200).json({ users });
     } catch (error) {
-      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   };
 
+  //GET /backoffice-users?name=Jane&email=@example.com&gender=Female&page=1&limit=10
   public static readonly getAllBackofficeUsers: RequestHandler = async (
     req,
     res
   ) => {
     try {
+      const validation = getAllBackofficeUsersSchema.safeParse(req.query);
+      if (!validation.success) {
+        res.status(400).json({ message: validation.error.errors[0].message });
+        return;
+      }
+
+      const { name, email, gender, page = 1, limit = 10 } = validation.data;
+
+      const filters: Record<string, any> = {
+        userType: USER_TYPES.BACKOFFICE,
+        deletedAt: null,
+      };
+
+      if (name) {
+        filters.name = { contains: name, mode: 'insensitive' };
+      }
+
+      if (email) {
+        filters.email = { contains: email, mode: 'insensitive' };
+      }
+
+      if (gender) {
+        filters.gender = gender;
+      }
+
+      const skip = (Number(page) - 1) * Number(limit);
+
       const users = await prisma.user.findMany({
-        where: {
-          userType: USER_TYPES.BACKOFFICE,
-          isDeleted: false,
+        where: filters,
+        skip,
+        take: Number(limit),
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          description: true,
+          userType: true,
+          phoneNumber: true,
+          gender: true,
+          ProfessionalProfile: true,
+          Service: true,
+          Application: true,
         },
       });
 
-      res.status(200).json({ users });
+      const totalUsers = await prisma.user.count({ where: filters });
+
+      res.status(200).json({
+        users,
+        pagination: {
+          total: totalUsers,
+          currentPage: Number(page),
+          totalPages: Math.ceil(totalUsers / Number(limit)),
+        },
+      });
     } catch (error) {
-      console.error(error);
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
       });
